@@ -159,6 +159,8 @@ export const headToHead = mysqlTable(
     winsB: int("winsB").default(0).notNull(),
     totalPointsA: int("totalPointsA").default(0).notNull(),
     totalPointsB: int("totalPointsB").default(0).notNull(),
+    cumulativeGameScoreA: int("cumulativeGameScoreA").default(0).notNull(),
+    cumulativeGameScoreB: int("cumulativeGameScoreB").default(0).notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   (t) => [uniqueIndex("h2h_pair_idx").on(t.playerAId, t.playerBId)]

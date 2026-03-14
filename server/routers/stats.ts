@@ -103,6 +103,8 @@ export const statsRouter = router({
         winsB: isAFirst ? (h2h?.winsB ?? 0) : (h2h?.winsA ?? 0),
         totalPointsA: isAFirst ? (h2h?.totalPointsA ?? 0) : (h2h?.totalPointsB ?? 0),
         totalPointsB: isAFirst ? (h2h?.totalPointsB ?? 0) : (h2h?.totalPointsA ?? 0),
+        cumulativeGameScoreA: isAFirst ? (h2h?.cumulativeGameScoreA ?? 0) : (h2h?.cumulativeGameScoreB ?? 0),
+        cumulativeGameScoreB: isAFirst ? (h2h?.cumulativeGameScoreB ?? 0) : (h2h?.cumulativeGameScoreA ?? 0),
       };
     }),
 
@@ -123,6 +125,8 @@ export const statsRouter = router({
             losses: isAFirst ? row.winsB : row.winsA,
             totalPoints: isAFirst ? row.totalPointsA : row.totalPointsB,
             opponentPoints: isAFirst ? row.totalPointsB : row.totalPointsA,
+            cumulativeGameScore: isAFirst ? (row.cumulativeGameScoreA ?? 0) : (row.cumulativeGameScoreB ?? 0),
+            opponentCumulativeGameScore: isAFirst ? (row.cumulativeGameScoreB ?? 0) : (row.cumulativeGameScoreA ?? 0),
           };
         })
       );

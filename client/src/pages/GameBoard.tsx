@@ -27,6 +27,7 @@ type PlayerScoring = {
   lineBonus: number;
   gameBonus: number;
   shutoutBonus: number;
+  diffBonus: number;
   totalGameScore: number;
 };
 
@@ -284,6 +285,14 @@ function GameOverDialog({
 }) {
   const { data: winnerData } = trpc.players.getById.useQuery({ id: gameOver.winnerId });
 
+  // For 2-player sessions, fetch the updated h2h cumulative scores
+  const playerIds = gameOver.playerScoring.map((p) => p.playerId);
+  const h2hEnabled = playerIds.length === 2;
+  const { data: h2hData } = trpc.stats.headToHead.useQuery(
+    { playerAId: playerIds[0]!, playerBId: playerIds[1]! },
+    { enabled: h2hEnabled }
+  );
+
   // Sort: winner first, then by totalGameScore desc
   const sortedScoring = [...gameOver.playerScoring].sort((a, b) => {
     if (a.playerId === gameOver.winnerId) return -1;
@@ -328,9 +337,33 @@ function GameOverDialog({
 
           <Separator className="bg-border" />
 
+          {/* Cumulative running total between the two players */}
+          {h2hEnabled && h2hData && (h2hData.cumulativeGameScoreA + h2hData.cumulativeGameScoreB) > 0 && (
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 space-y-2">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Running Total Between Players</p>
+              <div className="flex justify-between items-center">
+                {[playerIds[0]!, playerIds[1]!].map((pid, idx) => {
+                  const isA = h2hData.playerA?.id === pid;
+                  const cum = isA ? h2hData.cumulativeGameScoreA : h2hData.cumulativeGameScoreB;
+                  const name = isA ? h2hData.playerA?.name : h2hData.playerB?.name;
+                  const isWinner = pid === gameOver.winnerId;
+                  return (
+                    <div key={pid} className={idx === 1 ? "text-right" : ""}>
+                      <p className={`text-2xl font-bold ${isWinner ? "text-primary" : "text-chart-2"}`}>{cum}</p>
+                      <p className="text-xs text-muted-foreground">{name}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                After {h2hData.gamesPlayed} {h2hData.gamesPlayed === 1 ? "game" : "games"} · includes all bonuses
+              </p>
+            </div>
+          )}
+
           {/* Grand total row */}
           <div className="flex justify-between text-xs text-muted-foreground px-1">
-            <span>Game Bonus +100 (winner) · Line Bonus +20/hand won · Shutout Bonus +100</span>
+            <span>Game +100 · Line +20/hand · Shutout +100 · Score Diff bonus (winner − loser score)</span>
           </div>
 
           <Button
@@ -379,6 +412,12 @@ function PlayerScoringRow({ ps, isWinner }: { ps: PlayerScoring; isWinner: boole
           <div className="flex justify-between text-muted-foreground">
             <span>Shutout bonus</span>
             <span className="text-amber-400">+{ps.shutoutBonus}</span>
+          </div>
+        )}
+        {ps.diffBonus > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>Score differential bonus</span>
+            <span className="text-emerald-400">+{ps.diffBonus}</span>
           </div>
         )}
       </div>

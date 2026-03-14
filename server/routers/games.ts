@@ -6,12 +6,14 @@ import {
   getGameById,
   getGameResults,
   getGamesBySession,
+  getHeadToHead,
   getPlayerStats,
   getSessionById,
   getSessionPlayers,
   revertGame,
   updateSession,
   updateSessionPlayer,
+  upsertHeadToHead,
   upsertPlayerStats,
   writeAuditLog,
 } from "../db";
@@ -156,16 +158,20 @@ export const gamesRouter = router({
         // Line bonus: 20 pts per hand won by each player
         // Game bonus: 100 pts to winner
         // Shutout bonus: 100 pts to winner if any opponent won zero hands
+        // Score differential bonus: winner gets (winner score - loser score) as bonus
         const loser = sortedByScore[1];
         const loserHandsWon = loser?.handsWon ?? 0;
         const isShutout = loserHandsWon === 0;
+        const scoreDifferential = (winner.totalScore ?? 0) - (loser?.totalScore ?? 0);
+        const scoreDiffBonus = Math.max(0, scoreDifferential);
 
         const playerScoring = updatedPlayers.map((sp) => {
           const isWin = sp.playerId === winner.playerId;
           const lineBonus = sp.handsWon * 20;
           const gameBonus = isWin ? 100 : 0;
           const shutoutBonus = isWin && isShutout ? 100 : 0;
-          const totalGameScore = sp.totalScore + lineBonus + gameBonus + shutoutBonus;
+          const diffBonus = isWin ? scoreDiffBonus : 0;
+          const totalGameScore = sp.totalScore + lineBonus + gameBonus + shutoutBonus + diffBonus;
           return {
             playerId: sp.playerId,
             sessionScore: sp.totalScore,
@@ -174,9 +180,28 @@ export const gamesRouter = router({
             lineBonus,
             gameBonus,
             shutoutBonus,
+            diffBonus,
             totalGameScore,
           };
         });
+
+        // Update head-to-head cumulative game scores (for 2-player sessions)
+        if (updatedPlayers.length === 2) {
+          const [pA, pB] = updatedPlayers;
+          const scoringA = playerScoring.find((s) => s.playerId === pA.playerId);
+          const scoringB = playerScoring.find((s) => s.playerId === pB.playerId);
+          const existing = await getHeadToHead(pA.playerId, pB.playerId);
+          const minId = Math.min(pA.playerId, pB.playerId);
+          const isAMin = pA.playerId === minId;
+          const existingCumA = isAMin ? (existing?.cumulativeGameScoreA ?? 0) : (existing?.cumulativeGameScoreB ?? 0);
+          const existingCumB = isAMin ? (existing?.cumulativeGameScoreB ?? 0) : (existing?.cumulativeGameScoreA ?? 0);
+          const newCumA = existingCumA + (scoringA?.totalGameScore ?? 0);
+          const newCumB = existingCumB + (scoringB?.totalGameScore ?? 0);
+          await upsertHeadToHead(pA.playerId, pB.playerId, {
+            cumulativeGameScoreA: isAMin ? newCumA : newCumB,
+            cumulativeGameScoreB: isAMin ? newCumB : newCumA,
+          });
+        }
 
         return {
           gameId,

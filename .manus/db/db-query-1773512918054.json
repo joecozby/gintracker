@@ -1,0 +1,42 @@
+{
+  "query": "SELECT s.id, s.status, sp.playerId, sp.totalScore, sp.handsWon, sp.handsPlayed\nFROM sessions s\nJOIN session_players sp ON sp.sessionId = s.id\nWHERE s.status = 'completed'\nORDER BY s.id, sp.playerId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute SELECT s.id, s.status, sp.playerId, sp.totalScore, sp.handsWon, sp.handsPlayed\nFROM sessions s\nJOIN session_players sp ON sp.sessionId = s.id\nWHERE s.status = 'completed'\nORDER BY s.id, sp.playerId;",
+  "rows": [
+    {
+      "id": "30001",
+      "status": "completed",
+      "playerId": "1",
+      "totalScore": "100",
+      "handsWon": "3",
+      "handsPlayed": "3"
+    },
+    {
+      "id": "30001",
+      "status": "completed",
+      "playerId": "2",
+      "totalScore": "0",
+      "handsWon": "0",
+      "handsPlayed": "3"
+    },
+    {
+      "id": "30002",
+      "status": "completed",
+      "playerId": "1",
+      "totalScore": "111",
+      "handsWon": "5",
+      "handsPlayed": "7"
+    },
+    {
+      "id": "30002",
+      "status": "completed",
+      "playerId": "2",
+      "totalScore": "77",
+      "handsWon": "2",
+      "handsPlayed": "7"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tplayerId\ttotalScore\thandsWon\thandsPlayed\n30001\tcompleted\t1\t100\t3\t3\n30001\tcompleted\t2\t0\t0\t3\n30002\tcompleted\t1\t111\t5\t7\n30002\tcompleted\t2\t77\t2\t7\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

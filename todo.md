@@ -67,3 +67,12 @@
 - [x] Fix Dashboard stats: show games won/lost not hands won/lost
 - [x] Fix Leaderboard: show games won/lost not hands won/lost; move hand win % to Charts only
 - [x] Add sessionsPlayed/sessionsWon schema columns with migration and backfill
+
+## Round 4 Changes
+- [ ] Add score differential bonus to game-over scoring (winner gets bonus = winner score - loser score)
+- [ ] Show score differential bonus in congratulations popup
+- [ ] Track cumulative bonus-inclusive game scores in head-to-head table (new column: cumulativeScoreA, cumulativeScoreB)
+- [ ] Display cumulative running total in congratulations popup
+- [ ] Fix head-to-head total points to include bonuses (use cumulative game scores, not raw hand points)
+- [ ] Rename "avg points per game" to "avg points per hand" in head-to-head
+- [ ] Add "avg points per game" (session-level) and "avg points per session" to head-to-head stats
