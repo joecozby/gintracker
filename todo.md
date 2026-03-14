@@ -55,3 +55,7 @@
 - [x] Loading skeletons and empty states
 - [x] Error handling and toast notifications
 - [x] Final checkpoint
+
+## Bug Fixes & Enhancements
+- [x] Add delete session button with confirmation dialog on Sessions page
+- [x] Fix running score total mismatch between scoreboard and hand history in GameBoard

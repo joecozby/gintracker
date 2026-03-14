@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   addSessionPlayer,
   createSession,
+  deleteSession,
   getGamesBySession,
   getGameResults,
   getPlayerById,
@@ -118,6 +119,23 @@ export const sessionsRouter = router({
         actionType: "SESSION_CANCELLED",
         targetType: "session",
         targetId: input.id,
+      });
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const session = await getSessionById(input.id);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+      const sessionName = session.name;
+      await deleteSession(input.id);
+      await writeAuditLog({
+        actorUserId: ctx.user.id,
+        actionType: "SESSION_DELETED",
+        targetType: "session",
+        targetId: input.id,
+        beforeJson: { name: sessionName },
       });
       return { success: true };
     }),

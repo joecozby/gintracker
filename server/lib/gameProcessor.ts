@@ -21,7 +21,6 @@ import {
   resetAllEloHistory,
   resetAllHeadToHead,
   resetAllPlayerStats,
-  updateSessionPlayer,
   upsertHeadToHead,
   upsertPlayerStats,
   writeAuditLog,
@@ -53,20 +52,15 @@ async function getEloSettings(): Promise<EloSettings> {
  * Process all side-effects after a new game hand is logged.
  */
 export async function processGameLogged(input: ProcessGameInput): Promise<void> {
-  const { gameId, sessionId, results, actorUserId } = input;
+  const { gameId, results, actorUserId } = input;
   const settings = await getEloSettings();
   const algorithm = (await getAdminSetting("elo_algorithm")) ?? "rank_based";
 
-  // 1. Update session_players totals
-  for (const result of results) {
-    const currentStats = await getPlayerStats(result.playerId);
-    await updateSessionPlayer(sessionId, result.playerId, {
-      totalScore: (currentStats?.totalPoints ?? 0), // will be updated via player_stats
-      handsPlayed: 1, // incremental — handled below
-    });
-  }
-
-  // 2. Update player_stats
+  // 1. Update player_stats
+  // NOTE: session_players totalScore/handsPlayed/handsWon are updated
+  // directly in the logHand mutation in games.ts using the session-scoped
+  // running total. Do NOT update them here to avoid overwriting with
+  // global career points.
   for (const result of results) {
     const existing = await getPlayerStats(result.playerId);
     const isWin = result.rank === 1;

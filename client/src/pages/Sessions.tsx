@@ -1,9 +1,12 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,18 +17,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, Gamepad2, MapPin, Plus, Target, Users } from "lucide-react";
+import { Calendar, Gamepad2, MapPin, Plus, Target, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 export default function Sessions() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const utils = trpc.useUtils();
   const { data: sessions, isLoading } = trpc.sessions.list.useQuery({ status: undefined });
   const { data: players } = trpc.players.list.useQuery();
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  const isAdmin = user?.role === "admin";
 
   const createMutation = trpc.sessions.create.useMutation({
     onSuccess: (data) => {
@@ -37,6 +45,20 @@ export default function Sessions() {
     onError: (e) => toast.error(e.message),
   });
 
+  const deleteMutation = trpc.sessions.delete.useMutation({
+    onSuccess: () => {
+      utils.sessions.list.invalidate();
+      setDeleteConfirmOpen(false);
+      setDeleteId(null);
+      toast.success("Session deleted.");
+    },
+    onError: (e) => {
+      toast.error(e.message);
+      setDeleteConfirmOpen(false);
+    },
+  });
+
+  const sessionToDelete = sessions?.find((s) => s.id === deleteId);
   const filtered = sessions?.filter((s) => filter === "all" || s.status === filter) ?? [];
 
   return (
@@ -134,9 +156,26 @@ export default function Sessions() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground shrink-0">
-                    <p>Gin: +{session.ginBonus}</p>
-                    <p>Undercut: +{session.undercutBonus}</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right text-xs text-muted-foreground">
+                      <p>Gin: +{session.ginBonus}</p>
+                      <p>Undercut: +{session.undercutBonus}</p>
+                    </div>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(session.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        title="Delete session"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -144,6 +183,47 @@ export default function Sessions() {
           ))}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={(open) => {
+        setDeleteConfirmOpen(open);
+        if (!open) setDeleteId(null);
+      }}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-destructive">Delete Session?</DialogTitle>
+            <DialogDescription className="text-muted-foreground pt-1">
+              This will permanently delete{" "}
+              <span className="font-semibold text-foreground">
+                {sessionToDelete?.name ?? "this session"}
+              </span>{" "}
+              and all of its hand history, scores, and Elo changes. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              className="border-border"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setDeleteId(null);
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteId !== null) deleteMutation.mutate({ id: deleteId });
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Yes, Delete Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

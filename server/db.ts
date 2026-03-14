@@ -172,6 +172,21 @@ export async function updateSession(
   await db.update(sessions).set(data).where(eq(sessions.id, id));
 }
 
+export async function deleteSession(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Delete in dependency order: game_results → elo_history → games → session_players → sessions
+  const sessionGames = await db.select({ id: games.id }).from(games).where(eq(games.sessionId, id));
+  const gameIds = sessionGames.map((g) => g.id);
+  if (gameIds.length > 0) {
+    await db.delete(gameResults).where(inArray(gameResults.gameId, gameIds));
+    await db.delete(eloHistory).where(inArray(eloHistory.gameId, gameIds));
+    await db.delete(games).where(eq(games.sessionId, id));
+  }
+  await db.delete(sessionPlayers).where(eq(sessionPlayers.sessionId, id));
+  await db.delete(sessions).where(eq(sessions.id, id));
+}
+
 // ─── Session Players ──────────────────────────────────────────────────────────
 export async function getSessionPlayers(sessionId: number) {
   const db = await getDb();
