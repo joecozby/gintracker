@@ -29,10 +29,16 @@ export const statsRouter = router({
         playerNickname: r.playerNickname,
         playerAvatarUrl: r.playerAvatarUrl,
         eloRating: r.eloRating,
-        gamesPlayed: r.gamesPlayed,
-        gamesWon: r.gamesWon,
-        gamesLost: r.gamesLost,
+        handsPlayed: r.gamesPlayed,
+        handsWon: r.gamesWon,
+        handsLost: r.gamesLost,
+        sessionsPlayed: r.sessionsPlayed,
+        sessionsWon: r.sessionsWon,
+        sessionsLost: (r.sessionsPlayed ?? 0) - (r.sessionsWon ?? 0),
+        // winRate is session-level (games won, not hands won)
         winRate:
+          (r.sessionsPlayed ?? 0) > 0 ? Math.round(((r.sessionsWon ?? 0) / r.sessionsPlayed) * 1000) / 10 : 0,
+        handWinRate:
           r.gamesPlayed > 0 ? Math.round((r.gamesWon / r.gamesPlayed) * 1000) / 10 : 0,
         avgPoints:
           r.gamesPlayed > 0 ? Math.round((r.totalPoints / r.gamesPlayed) * 10) / 10 : 0,
@@ -58,7 +64,17 @@ export const statsRouter = router({
         player,
         stats,
         eloHistory,
+        sessionsPlayed: stats?.sessionsPlayed ?? 0,
+        sessionsWon: stats?.sessionsWon ?? 0,
+        handsPlayed: stats?.gamesPlayed ?? 0,
+        handsWon: stats?.gamesWon ?? 0,
+        // Session-level win rate
         winRate:
+          stats && (stats.sessionsPlayed ?? 0) > 0
+            ? Math.round(((stats.sessionsWon ?? 0) / stats.sessionsPlayed) * 1000) / 10
+            : 0,
+        // Hand-level win rate (for charts)
+        handWinRate:
           stats && stats.gamesPlayed > 0
             ? Math.round((stats.gamesWon / stats.gamesPlayed) * 1000) / 10
             : 0,

@@ -6,10 +6,13 @@ import {
   getGameById,
   getGameResults,
   getGamesBySession,
+  getPlayerStats,
   getSessionById,
   getSessionPlayers,
   revertGame,
+  updateSession,
   updateSessionPlayer,
+  upsertPlayerStats,
   writeAuditLog,
 } from "../db";
 import { processGameLogged, processGameReverted } from "../lib/gameProcessor";
@@ -132,14 +135,60 @@ export const gamesRouter = router({
 
       // Check if session is complete
       const updatedPlayers = await getSessionPlayers(input.sessionId);
-      const winner = updatedPlayers.find((p) => p.totalScore >= session.targetScore);
-      if (winner) {
-        await import("../db").then((m) =>
-          m.updateSession(input.sessionId, { status: "completed", completedAt: new Date() })
-        );
+      const sortedByScore = [...updatedPlayers].sort((a, b) => b.totalScore - a.totalScore);
+      const winner = sortedByScore[0];
+      const sessionComplete = winner.totalScore >= session.targetScore;
+
+      if (sessionComplete) {
+        await updateSession(input.sessionId, { status: "completed", completedAt: new Date() });
+
+        // Update sessionsPlayed and sessionsWon for all participants
+        for (const sp of updatedPlayers) {
+          const existing = await getPlayerStats(sp.playerId);
+          const isWinner = sp.playerId === winner.playerId;
+          await upsertPlayerStats(sp.playerId, {
+            sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
+            sessionsWon: (existing?.sessionsWon ?? 0) + (isWinner ? 1 : 0),
+          });
+        }
+
+        // Compute full game scoring breakdown
+        // Line bonus: 20 pts per hand won by each player
+        // Game bonus: 100 pts to winner
+        // Shutout bonus: 100 pts to winner if any opponent won zero hands
+        const loser = sortedByScore[1];
+        const loserHandsWon = loser?.handsWon ?? 0;
+        const isShutout = loserHandsWon === 0;
+
+        const playerScoring = updatedPlayers.map((sp) => {
+          const isWin = sp.playerId === winner.playerId;
+          const lineBonus = sp.handsWon * 20;
+          const gameBonus = isWin ? 100 : 0;
+          const shutoutBonus = isWin && isShutout ? 100 : 0;
+          const totalGameScore = sp.totalScore + lineBonus + gameBonus + shutoutBonus;
+          return {
+            playerId: sp.playerId,
+            sessionScore: sp.totalScore,
+            handsWon: sp.handsWon,
+            handsPlayed: sp.handsPlayed,
+            lineBonus,
+            gameBonus,
+            shutoutBonus,
+            totalGameScore,
+          };
+        });
+
+        return {
+          gameId,
+          handResults,
+          sessionComplete: true,
+          winnerId: winner.playerId,
+          isShutout,
+          playerScoring,
+        };
       }
 
-      return { gameId, handResults, sessionComplete: !!winner, winnerId: winner?.playerId };
+      return { gameId, handResults, sessionComplete: false, winnerId: null, isShutout: false, playerScoring: null };
     }),
 
   revert: protectedProcedure

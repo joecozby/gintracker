@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { formatDistanceToNow } from "date-fns";
 import { Calendar, Gamepad2, MapPin, Plus, Target, Trash2 } from "lucide-react";
@@ -239,12 +238,12 @@ function CreateSessionForm({
 }) {
   const [name, setName] = useState(`Game ${new Date().toLocaleDateString()}`);
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
-  const [targetScore, setTargetScore] = useState(100);
-  const [ginBonus, setGinBonus] = useState(25);
-  const [undercutBonus, setUndercutBonus] = useState(25);
-  const [knockBonus, setKnockBonus] = useState(0);
   const [location, setLocation] = useState("");
-  const [buyInEnabled, setBuyInEnabled] = useState(false);
+  // Standard Gin Rummy rules — fixed values
+  const targetScore = 100;
+  const ginBonus = 25;
+  const undercutBonus = 25;
+  const knockBonus = 0;
 
   const togglePlayer = (id: number) => {
     setSelectedPlayers((prev) =>
@@ -283,33 +282,20 @@ function CreateSessionForm({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Target Score</Label>
-          <Input type="number" value={targetScore} onChange={(e) => setTargetScore(+e.target.value)} className="bg-input border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Gin Bonus</Label>
-          <Input type="number" value={ginBonus} onChange={(e) => setGinBonus(+e.target.value)} className="bg-input border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Undercut Bonus</Label>
-          <Input type="number" value={undercutBonus} onChange={(e) => setUndercutBonus(+e.target.value)} className="bg-input border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Knock Bonus</Label>
-          <Input type="number" value={knockBonus} onChange={(e) => setKnockBonus(+e.target.value)} className="bg-input border-border" />
+      {/* Fixed scoring rules — displayed as info, not editable */}
+      <div className="rounded-lg border border-border bg-muted/20 p-3">
+        <p className="text-xs font-medium text-muted-foreground mb-2">Standard Rules</p>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+          <div className="flex justify-between"><span className="text-muted-foreground">Target score</span><span className="text-foreground font-medium">100</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Gin bonus</span><span className="text-foreground font-medium">+25</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Undercut bonus</span><span className="text-foreground font-medium">+25</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Knock bonus</span><span className="text-foreground font-medium">0</span></div>
         </div>
       </div>
 
       <div className="space-y-1">
         <Label className="text-xs">Location (optional)</Label>
         <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Living room" className="bg-input border-border" />
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Switch checked={buyInEnabled} onCheckedChange={setBuyInEnabled} />
-        <Label className="text-sm">Enable buy-in</Label>
       </div>
 
       <Button
@@ -322,7 +308,6 @@ function CreateSessionForm({
             undercutBonus,
             knockBonus,
             location: location || undefined,
-            buyInEnabled,
           })
         }
         disabled={!name.trim() || selectedPlayers.length < 2 || loading}

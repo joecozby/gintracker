@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `player_stats` ADD `sessionsPlayed` int DEFAULT 0 NOT NULL;\nALTER TABLE `player_stats` ADD `sessionsWon` int DEFAULT 0 NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute ALTER TABLE `player_stats` ADD `sessionsPlayed` int DEFAULT 0 NOT NULL;\nALTER TABLE `player_stats` ADD `sessionsWon` int DEFAULT 0 NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1252
+}

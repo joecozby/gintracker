@@ -399,6 +399,8 @@ export async function getLeaderboard(minGames = 0) {
       gamesPlayed: playerStats.gamesPlayed,
       gamesWon: playerStats.gamesWon,
       gamesLost: playerStats.gamesLost,
+      sessionsPlayed: playerStats.sessionsPlayed,
+      sessionsWon: playerStats.sessionsWon,
       totalPoints: playerStats.totalPoints,
       ginCount: playerStats.ginCount,
       knockCount: playerStats.knockCount,

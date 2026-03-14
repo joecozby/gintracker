@@ -59,3 +59,11 @@
 ## Bug Fixes & Enhancements
 - [x] Add delete session button with confirmation dialog on Sessions page
 - [x] Fix running score total mismatch between scoreboard and hand history in GameBoard
+
+## Round 3 Changes
+- [x] Fix session creation: hardcode target=100, gin bonus=25, undercut bonus=25, knock bonus=0 — remove all bonus toggles from UI
+- [x] Add game-over detection when a player reaches 100 points
+- [x] Build congratulations popup: winner name, hand stats, full scoring (game bonus +100, line bonus +20/hand won, shutout bonus +100), running total between players
+- [x] Fix Dashboard stats: show games won/lost not hands won/lost
+- [x] Fix Leaderboard: show games won/lost not hands won/lost; move hand win % to Charts only
+- [x] Add sessionsPlayed/sessionsWon schema columns with migration and backfill

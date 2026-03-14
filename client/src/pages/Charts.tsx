@@ -60,11 +60,12 @@ export default function Charts() {
 
   // Win rate bar chart data
   const winRateData = leaderboard
-    ?.filter((p) => p.gamesPlayed > 0)
+    ?.filter((p) => p.sessionsPlayed > 0)
     .map((p) => ({
       name: p.playerName.split(" ")[0],
-      winRate: p.winRate,
-      games: p.gamesPlayed,
+      winRate: p.winRate,       // session win rate
+      handWinRate: p.handWinRate, // hand win rate
+      games: p.sessionsPlayed,
     })) ?? [];
 
   // Gins vs Knocks pie data for selected player
@@ -72,7 +73,7 @@ export default function Charts() {
     ? [
         { name: "Gin", value: profile.stats.ginCount },
         { name: "Knock", value: profile.stats.knockCount - profile.stats.ginCount },
-        { name: "Other", value: Math.max(0, profile.stats.gamesWon - profile.stats.knockCount) },
+        { name: "Other", value: Math.max(0, (profile.stats.gamesWon ?? 0) - profile.stats.knockCount) },
       ].filter((d) => d.value > 0)
     : [];
 
@@ -89,7 +90,7 @@ export default function Charts() {
     WinRate: p.winRate,
     Gins: Math.min(100, p.ginCount * 5),
     Streak: Math.min(100, (p.bestStreak ?? 0) * 10),
-    Games: Math.min(100, p.gamesPlayed * 5),
+    Games: Math.min(100, p.sessionsPlayed * 5),
   })) ?? [];
 
   return (

@@ -128,9 +128,11 @@ export const playerStats = mysqlTable("player_stats", {
   id: int("id").autoincrement().primaryKey(),
   playerId: int("playerId").notNull().unique(),
   eloRating: float("eloRating").default(1500).notNull(),
-  gamesPlayed: int("gamesPlayed").default(0).notNull(),
-  gamesWon: int("gamesWon").default(0).notNull(),
-  gamesLost: int("gamesLost").default(0).notNull(),
+  gamesPlayed: int("gamesPlayed").default(0).notNull(),  // hands played
+  gamesWon: int("gamesWon").default(0).notNull(),        // hands won
+  gamesLost: int("gamesLost").default(0).notNull(),      // hands lost
+  sessionsPlayed: int("sessionsPlayed").default(0).notNull(), // full games (sessions) played
+  sessionsWon: int("sessionsWon").default(0).notNull(),       // full games (sessions) won
   totalPoints: int("totalPoints").default(0).notNull(),
   totalDeadwood: int("totalDeadwood").default(0).notNull(),
   ginCount: int("ginCount").default(0).notNull(),

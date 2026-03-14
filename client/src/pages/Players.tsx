@@ -59,7 +59,7 @@ export default function Players() {
     leaderboard?.find((l) => l.playerId === playerId)?.eloRating?.toFixed(0) ?? "1500";
 
   const getPlayerGames = (playerId: number) =>
-    leaderboard?.find((l) => l.playerId === playerId)?.gamesPlayed ?? 0;
+    leaderboard?.find((l) => l.playerId === playerId)?.sessionsPlayed ?? 0;
 
   return (
     <div className="space-y-6">

@@ -10,20 +10,40 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, CheckCircle, Crown, Plus, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, CheckCircle, Crown, PartyPopper, Plus, RotateCcw, Trophy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocation, useParams } from "wouter";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type PlayerScoring = {
+  playerId: number;
+  sessionScore: number;
+  handsWon: number;
+  handsPlayed: number;
+  lineBonus: number;
+  gameBonus: number;
+  shutoutBonus: number;
+  totalGameScore: number;
+};
+
+type GameOverData = {
+  winnerId: number;
+  isShutout: boolean;
+  playerScoring: PlayerScoring[];
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function GameBoard() {
   const params = useParams<{ id: string }>();
   const sessionId = parseInt(params.id ?? "0");
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [logOpen, setLogOpen] = useState(false);
+  const [gameOver, setGameOver] = useState<GameOverData | null>(null);
 
   const { data, isLoading } = trpc.sessions.getById.useQuery({ id: sessionId });
 
@@ -57,8 +77,6 @@ export default function GameBoard() {
   if (!data) return <div className="text-muted-foreground">Session not found</div>;
 
   const { session, players, games } = data;
-
-  // Sort players by score descending
   const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
   const leader = sortedPlayers[0];
   const isActive = session.status === "active";
@@ -102,9 +120,16 @@ export default function GameBoard() {
                 <LogHandForm
                   sessionId={sessionId}
                   players={players}
-                  onSuccess={() => {
+                  onSuccess={(result) => {
                     utils.sessions.getById.invalidate({ id: sessionId });
                     setLogOpen(false);
+                    if (result?.sessionComplete && result.playerScoring) {
+                      setGameOver({
+                        winnerId: result.winnerId!,
+                        isShutout: result.isShutout,
+                        playerScoring: result.playerScoring,
+                      });
+                    }
                   }}
                 />
               </DialogContent>
@@ -125,28 +150,23 @@ export default function GameBoard() {
       </div>
 
       {/* Scoreboard */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {sortedPlayers.map((sp, i) => {
-          const isLeading = sp.playerId === leader?.playerId;
-          const pct = session.targetScore > 0 ? Math.min(100, (sp.totalScore / session.targetScore) * 100) : 0;
+      <div className={`grid gap-4 ${sortedPlayers.length <= 2 ? "grid-cols-2" : sortedPlayers.length === 3 ? "grid-cols-3" : "grid-cols-2 lg:grid-cols-4"}`}>
+        {sortedPlayers.map((sp, idx) => {
+          const pct = Math.min(100, (sp.totalScore / session.targetScore) * 100);
+          const isLeader = sp.playerId === leader?.playerId;
           return (
             <Card
               key={sp.playerId}
-              className={`bg-card border-border transition-all ${isLeading && isActive ? "border-primary/40 shadow-[0_0_20px_oklch(0.72_0.15_45/0.15)]" : ""}`}
+              className={`bg-card border-border transition-all ${isLeader && isActive ? "border-primary/40 shadow-[0_0_20px_oklch(0.72_0.15_45/0.1)]" : ""}`}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-1">
-                      {isLeading && isActive && <Crown className="h-3 w-3 text-primary" />}
-                      <p className="font-semibold text-sm text-foreground">
-                        {players.find((p) => p.playerId === sp.playerId) ? sp.playerId : "?"}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    {isLeader && isActive && <Crown className="h-3.5 w-3.5 text-primary shrink-0" />}
                     <PlayerName playerId={sp.playerId} />
                   </div>
-                  <span className={`text-xs font-medium ${i === 0 ? "text-yellow-400" : i === 1 ? "text-slate-300" : "text-muted-foreground"}`}>
-                    #{i + 1}
+                  <span className={`text-xs font-medium ${idx === 0 ? "text-yellow-400" : idx === 1 ? "text-slate-300" : "text-muted-foreground"}`}>
+                    #{idx + 1}
                   </span>
                 </div>
                 <p className="text-3xl font-bold text-foreground mb-2">{sp.totalScore}</p>
@@ -158,7 +178,7 @@ export default function GameBoard() {
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{sp.handsWon}W / {sp.handsPlayed - sp.handsWon}L</span>
-                  <span>{session.targetScore - sp.totalScore} to go</span>
+                  <span>{session.targetScore - sp.totalScore > 0 ? `${session.targetScore - sp.totalScore} to go` : "✓"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -177,12 +197,8 @@ export default function GameBoard() {
               No hands played yet. Log the first hand!
             </div>
           ) : (() => {
-            // Build running cumulative totals per player across hands in chronological order.
-            // games is already sorted ascending by handNumber from the server.
             const runningTotals: Record<number, number> = {};
             players.forEach((p) => { runningTotals[p.playerId] = 0; });
-
-            // Pre-compute cumulative totals after each hand (chronological)
             const cumulativeByHand: Record<number, Record<number, number>> = {};
             for (const game of games) {
               for (const r of (game.results ?? [])) {
@@ -190,7 +206,6 @@ export default function GameBoard() {
               }
               cumulativeByHand[game.id] = { ...runningTotals };
             }
-
             return (
               <div className="space-y-2">
                 {[...games].reverse().map((game) => {
@@ -238,13 +253,143 @@ export default function GameBoard() {
           })()}
         </CardContent>
       </Card>
+
+      {/* Game Over Congratulations Dialog */}
+      {gameOver && (
+        <GameOverDialog
+          gameOver={gameOver}
+          players={players}
+          sessionName={session.name}
+          onClose={() => {
+            setGameOver(null);
+            utils.sessions.getById.invalidate({ id: sessionId });
+          }}
+        />
+      )}
     </div>
   );
 }
 
+// ─── Game Over Dialog ─────────────────────────────────────────────────────────
+function GameOverDialog({
+  gameOver,
+  players,
+  sessionName,
+  onClose,
+}: {
+  gameOver: GameOverData;
+  players: { playerId: number; totalScore: number; handsWon: number; handsPlayed: number }[];
+  sessionName: string;
+  onClose: () => void;
+}) {
+  const { data: winnerData } = trpc.players.getById.useQuery({ id: gameOver.winnerId });
+
+  // Sort: winner first, then by totalGameScore desc
+  const sortedScoring = [...gameOver.playerScoring].sort((a, b) => {
+    if (a.playerId === gameOver.winnerId) return -1;
+    if (b.playerId === gameOver.winnerId) return 1;
+    return b.totalGameScore - a.totalGameScore;
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="bg-card border-border max-w-lg">
+        <DialogHeader>
+          <div className="flex flex-col items-center text-center gap-3 pt-2 pb-1">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                <Trophy className="h-8 w-8 text-primary" />
+              </div>
+              <PartyPopper className="h-5 w-5 text-amber-400 absolute -top-1 -right-1" />
+            </div>
+            <div>
+              <DialogTitle className="font-serif text-2xl text-primary">
+                {winnerData?.name ?? "Winner"} Wins!
+              </DialogTitle>
+              <p className="text-muted-foreground text-sm mt-1">{sessionName}</p>
+              {gameOver.isShutout && (
+                <Badge className="mt-2 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                  🏆 Shutout!
+                </Badge>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {/* Per-player scoring breakdown */}
+          {sortedScoring.map((ps) => (
+            <PlayerScoringRow
+              key={ps.playerId}
+              ps={ps}
+              isWinner={ps.playerId === gameOver.winnerId}
+            />
+          ))}
+
+          <Separator className="bg-border" />
+
+          {/* Grand total row */}
+          <div className="flex justify-between text-xs text-muted-foreground px-1">
+            <span>Game Bonus +100 (winner) · Line Bonus +20/hand won · Shutout Bonus +100</span>
+          </div>
+
+          <Button
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+            onClick={onClose}
+          >
+            View Final Scoreboard
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PlayerScoringRow({ ps, isWinner }: { ps: PlayerScoring; isWinner: boolean }) {
+  const { data: player } = trpc.players.getById.useQuery({ id: ps.playerId });
+
+  return (
+    <div className={`rounded-lg border p-3 space-y-2 ${isWinner ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isWinner && <Crown className="h-4 w-4 text-primary" />}
+          <span className="font-semibold text-sm text-foreground">{player?.name ?? "..."}</span>
+          <span className="text-xs text-muted-foreground">({ps.handsWon}W / {ps.handsPlayed - ps.handsWon}L)</span>
+        </div>
+        <span className={`font-bold text-lg ${isWinner ? "text-primary" : "text-foreground"}`}>
+          {ps.totalGameScore} pts
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Game score</span>
+          <span className="text-foreground">{ps.sessionScore}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Line bonus ({ps.handsWon} × 20)</span>
+          <span className={ps.lineBonus > 0 ? "text-primary" : "text-foreground"}>+{ps.lineBonus}</span>
+        </div>
+        {ps.gameBonus > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>Game bonus</span>
+            <span className="text-primary">+{ps.gameBonus}</span>
+          </div>
+        )}
+        {ps.shutoutBonus > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>Shutout bonus</span>
+            <span className="text-amber-400">+{ps.shutoutBonus}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Helper Components ────────────────────────────────────────────────────────
 function PlayerName({ playerId }: { playerId: number }) {
   const { data } = trpc.players.getById.useQuery({ id: playerId });
-  return <p className="text-xs text-muted-foreground truncate">{data?.name ?? "..."}</p>;
+  return <p className="text-sm font-semibold text-foreground truncate">{data?.name ?? "..."}</p>;
 }
 
 function PlayerNameInline({ playerId }: { playerId: number }) {
@@ -252,6 +397,7 @@ function PlayerNameInline({ playerId }: { playerId: number }) {
   return <span>{data?.name ?? "..."}</span>;
 }
 
+// ─── Log Hand Form ────────────────────────────────────────────────────────────
 function LogHandForm({
   sessionId,
   players,
@@ -259,7 +405,7 @@ function LogHandForm({
 }: {
   sessionId: number;
   players: { playerId: number; totalScore: number }[];
-  onSuccess: () => void;
+  onSuccess: (result: any) => void;
 }) {
   const [playerInputs, setPlayerInputs] = useState(
     players.map((p) => ({
@@ -273,12 +419,7 @@ function LogHandForm({
 
   const logMutation = trpc.games.logHand.useMutation({
     onSuccess: (data) => {
-      toast.success(
-        data.sessionComplete
-          ? "Session complete! 🎉"
-          : `Hand logged! ${data.handResults.find((r) => r.rank === 1) ? "" : ""}`
-      );
-      onSuccess();
+      onSuccess(data);
     },
     onError: (e) => toast.error(e.message),
   });

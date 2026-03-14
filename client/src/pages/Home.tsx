@@ -104,7 +104,7 @@ export default function Home() {
                           <span className="text-muted-foreground font-normal ml-1">"{p.playerNickname}"</span>
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground">{p.gamesPlayed} games · {p.winRate}% win rate</p>
+                      <p className="text-xs text-muted-foreground">{p.sessionsPlayed} games · {p.winRate}% win rate</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-primary">{p.eloRating?.toFixed(0)}</p>

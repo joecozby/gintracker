@@ -143,7 +143,7 @@ export default function Leaderboard() {
                     <span className="font-semibold text-primary">{p.eloRating?.toFixed(0)}</span>
                   </div>
                   <div className="text-right hidden sm:block">
-                    <span className="text-sm text-foreground">{p.gamesPlayed}</span>
+                    <span className="text-sm text-foreground">{p.sessionsPlayed}</span>
                   </div>
                   <div className="text-right hidden sm:block">
                     <span className="text-sm text-foreground">{p.winRate}%</span>
