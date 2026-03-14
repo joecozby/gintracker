@@ -176,48 +176,66 @@ export default function GameBoard() {
             <div className="text-center py-8 text-muted-foreground text-sm">
               No hands played yet. Log the first hand!
             </div>
-          ) : (
-            <div className="space-y-2">
-              {[...games].reverse().map((game) => {
-                const winner = game.results?.find((r: any) => r.rank === 1);
-                const isGin = game.results?.some((r: any) => r.isGin);
-                const isUndercut = game.results?.some((r: any) => r.isUndercut);
-                return (
-                  <div key={game.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <span className="text-xs text-muted-foreground w-12 shrink-0">#{game.handNumber}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {game.results?.map((r: any) => (
-                          <span key={r.playerId} className={`text-xs ${r.rank === 1 ? "text-primary font-semibold" : "text-muted-foreground"}`}>
-                            <PlayerNameInline playerId={r.playerId} />
-                            {r.rank === 1 ? ` +${r.pointsScored}` : ` (${r.deadwoodPoints}dw)`}
-                          </span>
-                        ))}
+          ) : (() => {
+            // Build running cumulative totals per player across hands in chronological order.
+            // games is already sorted ascending by handNumber from the server.
+            const runningTotals: Record<number, number> = {};
+            players.forEach((p) => { runningTotals[p.playerId] = 0; });
+
+            // Pre-compute cumulative totals after each hand (chronological)
+            const cumulativeByHand: Record<number, Record<number, number>> = {};
+            for (const game of games) {
+              for (const r of (game.results ?? [])) {
+                runningTotals[r.playerId] = (runningTotals[r.playerId] ?? 0) + r.pointsScored;
+              }
+              cumulativeByHand[game.id] = { ...runningTotals };
+            }
+
+            return (
+              <div className="space-y-2">
+                {[...games].reverse().map((game) => {
+                  const isGin = game.results?.some((r: any) => r.isGin);
+                  const isUndercut = game.results?.some((r: any) => r.isUndercut);
+                  const totalsAfterHand = cumulativeByHand[game.id] ?? {};
+                  return (
+                    <div key={game.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <span className="text-xs text-muted-foreground w-12 shrink-0">#{game.handNumber}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {game.results?.map((r: any) => (
+                            <span key={r.playerId} className={`text-xs ${r.rank === 1 ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                              <PlayerNameInline playerId={r.playerId} />
+                              {r.rank === 1
+                                ? ` +${r.pointsScored} → ${totalsAfterHand[r.playerId] ?? 0}`
+                                : ` (${r.deadwoodPoints}dw) → ${totalsAfterHand[r.playerId] ?? 0}`}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          {isGin && <Badge variant="outline" className="text-xs border-primary/30 text-primary px-1 py-0">Gin</Badge>}
+                          {isUndercut && <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400 px-1 py-0">Undercut</Badge>}
+                        </div>
                       </div>
-                      <div className="flex gap-1 mt-1">
-                        {isGin && <Badge variant="outline" className="text-xs border-primary/30 text-primary px-1 py-0">Gin</Badge>}
-                        {isUndercut && <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400 px-1 py-0">Undercut</Badge>}
-                      </div>
+                      {isActive && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => {
+                            if (confirm("Revert this hand? Stats will be recomputed.")) {
+                              revertMutation.mutate({ gameId: game.id });
+                            }
+                          }}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
-                    {isActive && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => {
-                          if (confirm("Revert this hand? Stats will be recomputed.")) {
-                            revertMutation.mutate({ gameId: game.id });
-                          }
-                        }}
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
