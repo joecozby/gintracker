@@ -1,0 +1,255 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { trpc } from "@/lib/trpc";
+import { formatDistanceToNow } from "date-fns";
+import { Calendar, Gamepad2, MapPin, Plus, Target, Users } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useLocation } from "wouter";
+
+export default function Sessions() {
+  const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
+  const { data: sessions, isLoading } = trpc.sessions.list.useQuery({ status: undefined });
+  const { data: players } = trpc.players.list.useQuery();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+
+  const createMutation = trpc.sessions.create.useMutation({
+    onSuccess: (data) => {
+      utils.sessions.list.invalidate();
+      setCreateOpen(false);
+      toast.success("Session created!");
+      setLocation(`/sessions/${data.id}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const filtered = sessions?.filter((s) => filter === "all" || s.status === filter) ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-serif font-semibold">Sessions</h1>
+          <p className="text-muted-foreground mt-1">Manage your Gin Rummy game sessions</p>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary text-primary-foreground hover:opacity-90 gap-2">
+              <Plus className="h-4 w-4" />
+              New Session
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-card border-border max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-serif">Create New Session</DialogTitle>
+            </DialogHeader>
+            <CreateSessionForm
+              players={players ?? []}
+              onSubmit={(data) => createMutation.mutate(data)}
+              loading={createMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        {(["all", "active", "completed"] as const).map((f) => (
+          <Button
+            key={f}
+            variant={filter === f ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter(f)}
+            className={filter === f ? "bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f !== "all" && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {sessions?.filter((s) => s.status === f).length ?? 0}
+              </Badge>
+            )}
+          </Button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="py-16 text-center">
+            <Gamepad2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No sessions found. Start a new game!</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((session) => (
+            <Card
+              key={session.id}
+              className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer"
+              onClick={() => setLocation(`/sessions/${session.id}`)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-foreground truncate">{session.name}</h3>
+                      <Badge
+                        variant={session.status === "active" ? "default" : "secondary"}
+                        className={session.status === "active" ? "bg-primary/20 text-primary border-primary/30 text-xs" : "text-xs"}
+                      >
+                        {session.status}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Target className="h-3 w-3" />
+                        Target: {session.targetScore}
+                      </span>
+                      {session.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {session.location}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground shrink-0">
+                    <p>Gin: +{session.ginBonus}</p>
+                    <p>Undercut: +{session.undercutBonus}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateSessionForm({
+  players,
+  onSubmit,
+  loading,
+}: {
+  players: { id: number; name: string; nickname?: string | null }[];
+  onSubmit: (data: any) => void;
+  loading: boolean;
+}) {
+  const [name, setName] = useState(`Game ${new Date().toLocaleDateString()}`);
+  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
+  const [targetScore, setTargetScore] = useState(100);
+  const [ginBonus, setGinBonus] = useState(25);
+  const [undercutBonus, setUndercutBonus] = useState(25);
+  const [knockBonus, setKnockBonus] = useState(0);
+  const [location, setLocation] = useState("");
+  const [buyInEnabled, setBuyInEnabled] = useState(false);
+
+  const togglePlayer = (id: number) => {
+    setSelectedPlayers((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="space-y-2">
+        <Label>Session Name</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-input border-border" />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Players (select 2+)</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {players.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => togglePlayer(p.id)}
+              className={`p-2 rounded-lg border text-sm text-left transition-all ${
+                selectedPlayers.includes(p.id)
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-foreground hover:border-primary/50"
+              }`}
+            >
+              <span className="font-medium">{p.name}</span>
+              {p.nickname && <span className="text-xs text-muted-foreground block">"{p.nickname}"</span>}
+            </button>
+          ))}
+        </div>
+        {players.length === 0 && (
+          <p className="text-sm text-muted-foreground">No players yet. Add players first.</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-xs">Target Score</Label>
+          <Input type="number" value={targetScore} onChange={(e) => setTargetScore(+e.target.value)} className="bg-input border-border" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Gin Bonus</Label>
+          <Input type="number" value={ginBonus} onChange={(e) => setGinBonus(+e.target.value)} className="bg-input border-border" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Undercut Bonus</Label>
+          <Input type="number" value={undercutBonus} onChange={(e) => setUndercutBonus(+e.target.value)} className="bg-input border-border" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Knock Bonus</Label>
+          <Input type="number" value={knockBonus} onChange={(e) => setKnockBonus(+e.target.value)} className="bg-input border-border" />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Location (optional)</Label>
+        <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Living room" className="bg-input border-border" />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Switch checked={buyInEnabled} onCheckedChange={setBuyInEnabled} />
+        <Label className="text-sm">Enable buy-in</Label>
+      </div>
+
+      <Button
+        onClick={() =>
+          onSubmit({
+            name,
+            playerIds: selectedPlayers,
+            targetScore,
+            ginBonus,
+            undercutBonus,
+            knockBonus,
+            location: location || undefined,
+            buyInEnabled,
+          })
+        }
+        disabled={!name.trim() || selectedPlayers.length < 2 || loading}
+        className="w-full bg-primary text-primary-foreground hover:opacity-90"
+      >
+        {loading ? "Creating..." : `Start Session with ${selectedPlayers.length} players`}
+      </Button>
+    </div>
+  );
+}

@@ -1,0 +1,143 @@
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import {
+  getAdminSetting,
+  getAllAdminSettings,
+  getAuditLog,
+  getEloHistoryByPlayer,
+  getHeadToHead,
+  getHeadToHeadForPlayer,
+  getLeaderboard,
+  getPlayerById,
+  getPlayerStats,
+  getPlayers,
+  setAdminSetting,
+  writeAuditLog,
+} from "../db";
+import { fullRecompute } from "../lib/gameProcessor";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+
+export const statsRouter = router({
+  leaderboard: publicProcedure
+    .input(z.object({ minGames: z.number().min(0).default(0) }))
+    .query(async ({ input }) => {
+      const rows = await getLeaderboard(input.minGames);
+      return rows.map((r, i) => ({
+        rank: i + 1,
+        playerId: r.playerId,
+        playerName: r.playerName,
+        playerNickname: r.playerNickname,
+        playerAvatarUrl: r.playerAvatarUrl,
+        eloRating: r.eloRating,
+        gamesPlayed: r.gamesPlayed,
+        gamesWon: r.gamesWon,
+        gamesLost: r.gamesLost,
+        winRate:
+          r.gamesPlayed > 0 ? Math.round((r.gamesWon / r.gamesPlayed) * 1000) / 10 : 0,
+        avgPoints:
+          r.gamesPlayed > 0 ? Math.round((r.totalPoints / r.gamesPlayed) * 10) / 10 : 0,
+        ginCount: r.ginCount,
+        knockCount: r.knockCount,
+        undercutCount: r.undercutCount,
+        currentStreak: r.currentStreak,
+        bestStreak: r.bestStreak,
+        lastGameAt: r.lastGameAt,
+      }));
+    }),
+
+  playerProfile: publicProcedure
+    .input(z.object({ playerId: z.number() }))
+    .query(async ({ input }) => {
+      const [player, stats, eloHistory] = await Promise.all([
+        getPlayerById(input.playerId),
+        getPlayerStats(input.playerId),
+        getEloHistoryByPlayer(input.playerId, 200),
+      ]);
+      if (!player) throw new TRPCError({ code: "NOT_FOUND" });
+      return {
+        player,
+        stats,
+        eloHistory,
+        winRate:
+          stats && stats.gamesPlayed > 0
+            ? Math.round((stats.gamesWon / stats.gamesPlayed) * 1000) / 10
+            : 0,
+      };
+    }),
+
+  headToHead: publicProcedure
+    .input(z.object({ playerAId: z.number(), playerBId: z.number() }))
+    .query(async ({ input }) => {
+      const [playerA, playerB, h2h] = await Promise.all([
+        getPlayerById(input.playerAId),
+        getPlayerById(input.playerBId),
+        getHeadToHead(input.playerAId, input.playerBId),
+      ]);
+      if (!playerA || !playerB) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Normalize so playerA is always the requested playerAId
+      const minId = Math.min(input.playerAId, input.playerBId);
+      const isAFirst = input.playerAId === minId;
+
+      return {
+        playerA,
+        playerB,
+        gamesPlayed: h2h?.gamesPlayed ?? 0,
+        winsA: isAFirst ? (h2h?.winsA ?? 0) : (h2h?.winsB ?? 0),
+        winsB: isAFirst ? (h2h?.winsB ?? 0) : (h2h?.winsA ?? 0),
+        totalPointsA: isAFirst ? (h2h?.totalPointsA ?? 0) : (h2h?.totalPointsB ?? 0),
+        totalPointsB: isAFirst ? (h2h?.totalPointsB ?? 0) : (h2h?.totalPointsA ?? 0),
+      };
+    }),
+
+  allHeadToHead: publicProcedure
+    .input(z.object({ playerId: z.number() }))
+    .query(async ({ input }) => {
+      const rows = await getHeadToHeadForPlayer(input.playerId);
+      const enriched = await Promise.all(
+        rows.map(async (row) => {
+          const opponentId =
+            row.playerAId === input.playerId ? row.playerBId : row.playerAId;
+          const opponent = await getPlayerById(opponentId);
+          const isAFirst = row.playerAId === input.playerId;
+          return {
+            opponent,
+            gamesPlayed: row.gamesPlayed,
+            wins: isAFirst ? row.winsA : row.winsB,
+            losses: isAFirst ? row.winsB : row.winsA,
+            totalPoints: isAFirst ? row.totalPointsA : row.totalPointsB,
+            opponentPoints: isAFirst ? row.totalPointsB : row.totalPointsA,
+          };
+        })
+      );
+      return enriched;
+    }),
+});
+
+export const adminRouter = router({
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    return getAllAdminSettings();
+  }),
+
+  updateSetting: protectedProcedure
+    .input(z.object({ key: z.string(), value: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await setAdminSetting(input.key, input.value);
+      return { success: true };
+    }),
+
+  recomputeAll: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    await fullRecompute(ctx.user.id);
+    return { success: true };
+  }),
+
+  auditLog: protectedProcedure
+    .input(z.object({ limit: z.number().default(100), offset: z.number().default(0) }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAuditLog(input.limit, input.offset);
+    }),
+});
