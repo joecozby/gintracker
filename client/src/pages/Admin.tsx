@@ -86,8 +86,8 @@ export default function AdminPage() {
                 <div className="text-center py-8 text-muted-foreground text-sm">No audit events yet</div>
               ) : (
                 <div className="space-y-2">
-                  {auditLog.map((entry: any, i: number) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  {auditLog.map((entry: any) => (
+                    <div key={entry.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="text-xs border-border">

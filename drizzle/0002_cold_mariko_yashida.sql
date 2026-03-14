@@ -1,0 +1,1 @@
+ALTER TABLE `head_to_head` ADD CONSTRAINT `h2h_pair_idx` UNIQUE(`playerAId`,`playerBId`);

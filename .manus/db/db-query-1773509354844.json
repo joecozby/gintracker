@@ -1,0 +1,70 @@
+{
+  "query": "SELECT gameId, playerId, `rank`, pointsScored FROM game_results ORDER BY gameId, `rank`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute SELECT gameId, playerId, `rank`, pointsScored FROM game_results ORDER BY gameId, `rank`;",
+  "rows": [
+    {
+      "gameId": "1",
+      "playerId": "1",
+      "rank": "1",
+      "pointsScored": "13"
+    },
+    {
+      "gameId": "1",
+      "playerId": "2",
+      "rank": "2",
+      "pointsScored": "0"
+    },
+    {
+      "gameId": "2",
+      "playerId": "1",
+      "rank": "1",
+      "pointsScored": "62"
+    },
+    {
+      "gameId": "2",
+      "playerId": "2",
+      "rank": "2",
+      "pointsScored": "0"
+    },
+    {
+      "gameId": "3",
+      "playerId": "1",
+      "rank": "1",
+      "pointsScored": "14"
+    },
+    {
+      "gameId": "3",
+      "playerId": "2",
+      "rank": "2",
+      "pointsScored": "0"
+    },
+    {
+      "gameId": "4",
+      "playerId": "1",
+      "rank": "1",
+      "pointsScored": "11"
+    },
+    {
+      "gameId": "4",
+      "playerId": "2",
+      "rank": "2",
+      "pointsScored": "0"
+    },
+    {
+      "gameId": "5",
+      "playerId": "1",
+      "rank": "1",
+      "pointsScored": "11"
+    },
+    {
+      "gameId": "5",
+      "playerId": "2",
+      "rank": "2",
+      "pointsScored": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "gameId\tplayerId\trank\tpointsScored\n1\t1\t1\t13\n1\t2\t2\t0\n2\t1\t1\t62\n2\t2\t2\t0\n3\t1\t1\t14\n3\t2\t2\t0\n4\t1\t1\t11\n4\t2\t2\t0\n5\t1\t1\t11\n5\t2\t2\t0\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

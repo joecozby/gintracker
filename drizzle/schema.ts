@@ -1,15 +1,4 @@
-import {
-  boolean,
-  decimal,
-  float,
-  int,
-  json,
-  mysqlEnum,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { boolean, decimal, float, int, json, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -157,17 +146,21 @@ export type PlayerStats = typeof playerStats.$inferSelect;
 export type InsertPlayerStats = typeof playerStats.$inferInsert;
 
 // ─── Head-to-Head (materialized) ──────────────────────────────────────────────
-export const headToHead = mysqlTable("head_to_head", {
-  id: int("id").autoincrement().primaryKey(),
-  playerAId: int("playerAId").notNull(),
-  playerBId: int("playerBId").notNull(),
-  gamesPlayed: int("gamesPlayed").default(0).notNull(),
-  winsA: int("winsA").default(0).notNull(),
-  winsB: int("winsB").default(0).notNull(),
-  totalPointsA: int("totalPointsA").default(0).notNull(),
-  totalPointsB: int("totalPointsB").default(0).notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+export const headToHead = mysqlTable(
+  "head_to_head",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    playerAId: int("playerAId").notNull(),
+    playerBId: int("playerBId").notNull(),
+    gamesPlayed: int("gamesPlayed").default(0).notNull(),
+    winsA: int("winsA").default(0).notNull(),
+    winsB: int("winsB").default(0).notNull(),
+    totalPointsA: int("totalPointsA").default(0).notNull(),
+    totalPointsB: int("totalPointsB").default(0).notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => [uniqueIndex("h2h_pair_idx").on(t.playerAId, t.playerBId)]
+);
 
 export type HeadToHead = typeof headToHead.$inferSelect;
 export type InsertHeadToHead = typeof headToHead.$inferInsert;

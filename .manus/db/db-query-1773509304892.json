@@ -1,0 +1,9 @@
+{
+  "query": "DELETE h1 FROM head_to_head h1\nINNER JOIN head_to_head h2\nWHERE h1.playerAId = h2.playerAId AND h1.playerBId = h2.playerBId AND h1.id > h2.id;\n\nALTER TABLE `head_to_head` ADD CONSTRAINT `h2h_pair_idx` UNIQUE(`playerAId`,`playerBId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute DELETE h1 FROM head_to_head h1\nINNER JOIN head_to_head h2\nWHERE h1.playerAId = h2.playerAId AND h1.playerBId = h2.playerBId AND h1.id > h2.id;\n\nALTER TABLE `head_to_head` ADD CONSTRAINT `h2h_pair_idx` UNIQUE(`playerAId`,`playerBId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 833
+}
