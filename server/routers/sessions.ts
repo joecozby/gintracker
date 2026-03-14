@@ -13,7 +13,7 @@ import {
   updateSession,
   writeAuditLog,
 } from "../db";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 
 export const sessionsRouter = router({
   list: publicProcedure
@@ -45,7 +45,7 @@ export const sessionsRouter = router({
       return { session, players: sessionPlayersList, games: gamesWithResults };
     }),
 
-  create: protectedProcedure
+  create: publicProcedure
     .input(
       z.object({
         name: z.string().min(1).max(200),
@@ -71,7 +71,7 @@ export const sessionsRouter = router({
 
       const sessionId = await createSession({
         ...sessionData,
-        createdByUserId: ctx.user.id,
+        createdByUserId: 0,
       });
 
       // Add players to session
@@ -80,7 +80,7 @@ export const sessionsRouter = router({
       }
 
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "SESSION_CREATED",
         targetType: "session",
         targetId: sessionId,
@@ -90,7 +90,7 @@ export const sessionsRouter = router({
       return { id: sessionId };
     }),
 
-  complete: protectedProcedure
+  complete: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const session = await getSessionById(input.id);
@@ -100,7 +100,7 @@ export const sessionsRouter = router({
       }
       await updateSession(input.id, { status: "completed", completedAt: new Date() });
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "SESSION_COMPLETED",
         targetType: "session",
         targetId: input.id,
@@ -108,14 +108,14 @@ export const sessionsRouter = router({
       return { success: true };
     }),
 
-  cancel: protectedProcedure
+  cancel: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const session = await getSessionById(input.id);
       if (!session) throw new TRPCError({ code: "NOT_FOUND" });
       await updateSession(input.id, { status: "cancelled" });
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "SESSION_CANCELLED",
         targetType: "session",
         targetId: input.id,
@@ -123,7 +123,7 @@ export const sessionsRouter = router({
       return { success: true };
     }),
 
-  delete: protectedProcedure
+  delete: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const session = await getSessionById(input.id);
@@ -131,7 +131,7 @@ export const sessionsRouter = router({
       const sessionName = session.name;
       await deleteSession(input.id);
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "SESSION_DELETED",
         targetType: "session",
         targetId: input.id,

@@ -15,7 +15,7 @@ import {
   writeAuditLog,
 } from "../db";
 import { fullRecompute } from "../lib/gameProcessor";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 
 export const statsRouter = router({
   leaderboard: publicProcedure
@@ -135,29 +135,25 @@ export const statsRouter = router({
 });
 
 export const adminRouter = router({
-  getSettings: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+  getSettings: publicProcedure.query(async () => {
     return getAllAdminSettings();
   }),
 
-  updateSetting: protectedProcedure
+  updateSetting: publicProcedure
     .input(z.object({ key: z.string(), value: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ input }) => {
       await setAdminSetting(input.key, input.value);
       return { success: true };
     }),
 
-  recomputeAll: protectedProcedure.mutation(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
-    await fullRecompute(ctx.user.id);
+  recomputeAll: publicProcedure.mutation(async () => {
+    await fullRecompute(0);
     return { success: true };
   }),
 
-  auditLog: protectedProcedure
+  auditLog: publicProcedure
     .input(z.object({ limit: z.number().default(100), offset: z.number().default(0) }))
-    .query(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .query(async ({ input }) => {
       return getAuditLog(input.limit, input.offset);
     }),
 });

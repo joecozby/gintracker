@@ -19,7 +19,7 @@ import {
 } from "../db";
 import { processGameLogged, processGameReverted } from "../lib/gameProcessor";
 import { HandResult, computeHandResults, validateHandInput } from "../lib/scoring";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 
 export const gamesRouter = router({
   getBySession: publicProcedure
@@ -44,7 +44,7 @@ export const gamesRouter = router({
       return { ...game, results };
     }),
 
-  logHand: protectedProcedure
+  logHand: publicProcedure
     .input(
       z.object({
         sessionId: z.number(),
@@ -97,7 +97,7 @@ export const gamesRouter = router({
         buyInAmount: input.buyInAmount,
         notes: input.notes,
         tags: input.tags,
-        createdByUserId: ctx.user.id,
+        createdByUserId: 0,
       });
 
       // Create game results
@@ -132,7 +132,7 @@ export const gamesRouter = router({
         gameId,
         sessionId: input.sessionId,
         results: handResults,
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
       });
 
       // Check if session is complete
@@ -216,7 +216,7 @@ export const gamesRouter = router({
       return { gameId, handResults, sessionComplete: false, winnerId: null, isShutout: false, playerScoring: null };
     }),
 
-  revert: protectedProcedure
+  revert: publicProcedure
     .input(z.object({ gameId: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const game = await getGameById(input.gameId);
@@ -237,7 +237,7 @@ export const gamesRouter = router({
       }));
 
       // Mark game as reverted
-      await revertGame(input.gameId, ctx.user.id);
+      await revertGame(input.gameId, 0);
 
       // Reopen session if it was completed
       const session = await getSessionById(game.sessionId);
@@ -248,7 +248,7 @@ export const gamesRouter = router({
       }
 
       // Process undo (triggers full recompute)
-      await processGameReverted(input.gameId, ctx.user.id, handResults);
+      await processGameReverted(input.gameId, 0, handResults);
 
       return { success: true };
     }),

@@ -3,8 +3,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -22,16 +20,13 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   BarChart3,
   BookOpen,
   Brain,
-  ChevronDown,
   Gamepad2,
   LayoutDashboard,
-  LogOut,
   PanelLeft,
   Settings,
   Swords,
@@ -41,7 +36,6 @@ import {
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
-import { Button } from "./ui/button";
 
 const navGroups = [
   {
@@ -92,32 +86,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [sidebarWidth]);
 
   if (loading) return <DashboardLayoutSkeleton />;
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="text-center space-y-4">
-            <div className="text-5xl mb-2">♠</div>
-            <h1 className="text-3xl font-serif font-semibold tracking-tight text-foreground">
-              Gin Tracker
-            </h1>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Track your Gin Rummy games, monitor Elo ratings, and analyze performance with
-              beautiful charts and AI-powered insights.
-            </p>
-          </div>
-          <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            size="lg"
-            className="w-full bg-primary text-primary-foreground hover:opacity-90 font-medium shadow-lg"
-          >
-            Sign in to continue
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
@@ -239,28 +207,22 @@ function DashboardLayoutContent({
                 <button className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-sidebar-accent transition-colors w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-8 w-8 border border-border shrink-0">
                     <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
-                      {user?.name?.charAt(0).toUpperCase() ?? "?"}
+                      ♠
                     </AvatarFallback>
                   </Avatar>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate leading-none text-foreground">
-                        {user?.name || "—"}
+                        Gin Tracker
                       </p>
                       <p className="text-xs text-muted-foreground truncate mt-1">
-                        {user?.role === "admin" ? "Administrator" : "Player"}
+                        {user?.name || "Guest"}
                       </p>
                     </div>
                   )}
-                  {!isCollapsed && <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarFooter>

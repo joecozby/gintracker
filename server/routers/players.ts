@@ -11,7 +11,7 @@ import {
   updatePlayer,
   writeAuditLog,
 } from "../db";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 
 export const playersRouter = router({
   list: publicProcedure.query(async () => {
@@ -39,7 +39,7 @@ export const playersRouter = router({
       return { player, stats, eloHistory, h2h };
     }),
 
-  create: protectedProcedure
+  create: publicProcedure
     .input(
       z.object({
         name: z.string().min(1).max(100),
@@ -49,9 +49,9 @@ export const playersRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const id = await createPlayer({ ...input, createdByUserId: ctx.user.id });
+      const id = await createPlayer({ ...input, createdByUserId: 0 });
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "PLAYER_CREATED",
         targetType: "player",
         targetId: id,
@@ -60,7 +60,7 @@ export const playersRouter = router({
       return { id };
     }),
 
-  update: protectedProcedure
+  update: publicProcedure
     .input(
       z.object({
         id: z.number(),
@@ -77,7 +77,7 @@ export const playersRouter = router({
       if (!before) throw new TRPCError({ code: "NOT_FOUND" });
       await updatePlayer(id, data);
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "PLAYER_UPDATED",
         targetType: "player",
         targetId: id,
@@ -87,14 +87,14 @@ export const playersRouter = router({
       return { success: true };
     }),
 
-  delete: protectedProcedure
+  delete: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const before = await getPlayerById(input.id);
       if (!before) throw new TRPCError({ code: "NOT_FOUND" });
       await updatePlayer(input.id, { isActive: false });
       await writeAuditLog({
-        actorUserId: ctx.user.id,
+        actorUserId: 0,
         actionType: "PLAYER_DELETED",
         targetType: "player",
         targetId: input.id,

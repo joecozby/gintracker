@@ -16,7 +16,7 @@ import {
 } from "../db";
 import { fullRecompute } from "../lib/gameProcessor";
 import { invokeLLM } from "../_core/llm";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 
 export const exportRouter = router({
   toJSON: publicProcedure.query(async () => {
@@ -132,7 +132,7 @@ export const exportRouter = router({
 });
 
 export const importRouter = router({
-  fromJSON: protectedProcedure
+  fromJSON: publicProcedure
     .input(
       z.object({
         data: z.object({
@@ -149,7 +149,7 @@ export const importRouter = router({
     .mutation(async ({ input, ctx }) => {
       const created: number[] = [];
       for (const p of input.data.players) {
-        const id = await createPlayer({ ...p, createdByUserId: ctx.user.id });
+        const id = await createPlayer({ ...p, createdByUserId: 0 });
         created.push(id);
       }
       return { playersCreated: created.length };
@@ -157,7 +157,7 @@ export const importRouter = router({
 });
 
 export const aiRouter = router({
-  analyzePlayer: protectedProcedure
+  analyzePlayer: publicProcedure
     .input(z.object({ playerId: z.number() }))
     .mutation(async ({ input }) => {
       const { getPlayerById, getPlayerStats, getEloHistoryByPlayer } = await import("../db");
@@ -203,7 +203,7 @@ Provide a concise, actionable analysis in markdown format.`;
       };
     }),
 
-  analyzeSession: protectedProcedure
+  analyzeSession: publicProcedure
     .input(z.object({ sessionId: z.number() }))
     .mutation(async ({ input }) => {
       const { getSessionById, getSessionPlayers, getGamesBySession, getGameResults, getPlayerById } =
@@ -255,7 +255,7 @@ Keep it concise and engaging.`;
       };
     }),
 
-  getInsights: protectedProcedure.mutation(async () => {
+  getInsights: publicProcedure.mutation(async () => {
     const leaderboard = await getLeaderboard(1);
     if (leaderboard.length === 0) {
       return { analysis: "No game data available yet. Play some games to get insights!" };
