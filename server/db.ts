@@ -409,7 +409,7 @@ export async function getLeaderboard(minGames = 0) {
     })
     .from(playerStats)
     .innerJoin(players, eq(playerStats.playerId, players.id))
-    .where(sql`${playerStats.gamesPlayed} >= ${minGames}`)
+    .where(sql`${playerStats.sessionsPlayed} >= ${minGames}`)
     .orderBy(desc(playerStats.eloRating));
   return stats;
 }

@@ -154,9 +154,12 @@ export const headToHead = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     playerAId: int("playerAId").notNull(),
     playerBId: int("playerBId").notNull(),
-    gamesPlayed: int("gamesPlayed").default(0).notNull(),
-    winsA: int("winsA").default(0).notNull(),
-    winsB: int("winsB").default(0).notNull(),
+    gamesPlayed: int("gamesPlayed").default(0).notNull(),       // individual hands played
+    winsA: int("winsA").default(0).notNull(),                   // hand wins for player A
+    winsB: int("winsB").default(0).notNull(),                   // hand wins for player B
+    sessionsPlayed: int("sessionsPlayed").default(0).notNull(), // full games (sessions) played
+    sessionsWonA: int("sessionsWonA").default(0).notNull(),     // sessions won by player A
+    sessionsWonB: int("sessionsWonB").default(0).notNull(),     // sessions won by player B
     totalPointsA: int("totalPointsA").default(0).notNull(),
     totalPointsB: int("totalPointsB").default(0).notNull(),
     cumulativeGameScoreA: int("cumulativeGameScoreA").default(0).notNull(),

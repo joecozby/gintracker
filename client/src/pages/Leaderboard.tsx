@@ -104,7 +104,7 @@ export default function Leaderboard() {
           ) : (
             <div className="divide-y divide-border">
               {/* Header */}
-              <div className="grid grid-cols-[3rem_1fr_repeat(5,_auto)] gap-2 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="grid grid-cols-[3rem_1fr_5rem_5rem_5rem_4rem_5rem] px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
                 <span>#</span>
                 <span>Player</span>
                 <span className="text-right">Elo</span>
@@ -116,7 +116,7 @@ export default function Leaderboard() {
               {filtered.map((p) => (
                 <div
                   key={p.playerId}
-                  className="grid grid-cols-[3rem_1fr_repeat(5,_auto)] gap-2 px-4 py-3 items-center hover:bg-accent/30 transition-colors cursor-pointer"
+                  className="grid grid-cols-[3rem_1fr_5rem_5rem_5rem_4rem_5rem] px-4 py-3 items-center hover:bg-accent/30 transition-colors cursor-pointer"
                   onClick={() => setLocation(`/players/${p.playerId}`)}
                 >
                   <div className="flex items-center justify-center">
@@ -139,21 +139,21 @@ export default function Leaderboard() {
                       {p.playerNickname && <p className="text-xs text-muted-foreground truncate">"{p.playerNickname}"</p>}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center justify-end">
                     <span className="font-semibold text-primary">{p.eloRating?.toFixed(0)}</span>
                   </div>
-                  <div className="text-right hidden sm:block">
+                  <div className="hidden sm:flex items-center justify-end">
                     <span className="text-sm text-foreground">{p.sessionsPlayed}</span>
                   </div>
-                  <div className="text-right hidden sm:block">
+                  <div className="hidden sm:flex items-center justify-end">
                     <span className="text-sm text-foreground">{p.winRate}%</span>
                   </div>
-                  <div className="text-right hidden md:block">
+                  <div className="hidden md:flex items-center justify-end">
                     <span className="text-sm text-foreground">{p.ginCount}</span>
                   </div>
-                  <div className="text-right hidden md:block">
-                    <span className={`text-sm flex items-center justify-end gap-1 ${p.currentStreak > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                      {p.currentStreak > 0 && <Flame className="h-3 w-3" />}
+                  <div className="hidden md:flex items-center justify-end gap-1">
+                    {p.currentStreak > 0 && <Flame className="h-3 w-3 text-primary" />}
+                    <span className={`text-sm ${p.currentStreak > 0 ? "text-primary" : "text-muted-foreground"}`}>
                       {p.currentStreak}
                     </span>
                   </div>

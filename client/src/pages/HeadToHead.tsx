@@ -23,31 +23,28 @@ export default function HeadToHead() {
     { enabled: !!playerAId && !!playerBId && playerAId !== playerBId }
   );
 
-  const totalGames = h2h?.gamesPlayed ?? 0;
+  const totalSessions = h2h?.sessionsPlayed ?? 0;
+  const totalHands = h2h?.handsPlayed ?? 0;
   const winsA = h2h?.winsA ?? 0;
   const winsB = h2h?.winsB ?? 0;
-  const pctA = totalGames > 0 ? (winsA / totalGames) * 100 : 50;
-  const pctB = totalGames > 0 ? (winsB / totalGames) * 100 : 50;
+  const pctA = totalSessions > 0 ? (winsA / totalSessions) * 100 : 50;
+  const pctB = totalSessions > 0 ? (winsB / totalSessions) * 100 : 50;
 
   // Cumulative bonus-inclusive game scores
   const cumA = h2h?.cumulativeGameScoreA ?? 0;
   const cumB = h2h?.cumulativeGameScoreB ?? 0;
 
-  // Raw hand points (from game_results, not bonus-inclusive)
+  // Raw hand points
   const rawA = h2h?.totalPointsA ?? 0;
   const rawB = h2h?.totalPointsB ?? 0;
 
-  // Avg points per hand = raw hand points / total hands played across all sessions
-  // We approximate total hands from the session data via totalPointsA (raw) — but we don't have
-  // handsPlayed in h2h directly. We'll compute avg per game (session) from cumulative scores.
-  // For avg per hand we use raw points / gamesPlayed as a proxy (one "game" = one session here).
-  // The stats router exposes gamesPlayed = number of sessions completed between these two players.
-  const avgHandPtsA = totalGames > 0 ? (rawA / totalGames).toFixed(1) : "—";
-  const avgHandPtsB = totalGames > 0 ? (rawB / totalGames).toFixed(1) : "—";
+  // Avg hand points per session (total hand points / sessions played)
+  const avgHandPtsA = totalSessions > 0 ? (rawA / totalSessions).toFixed(1) : "—";
+  const avgHandPtsB = totalSessions > 0 ? (rawB / totalSessions).toFixed(1) : "—";
 
   // Avg game score (bonus-inclusive) per session
-  const avgGameScoreA = totalGames > 0 ? (cumA / totalGames).toFixed(1) : "—";
-  const avgGameScoreB = totalGames > 0 ? (cumB / totalGames).toFixed(1) : "—";
+  const avgGameScoreA = totalSessions > 0 ? (cumA / totalSessions).toFixed(1) : "—";
+  const avgGameScoreB = totalSessions > 0 ? (cumB / totalSessions).toFixed(1) : "—";
 
   return (
     <div className="space-y-6">
@@ -97,7 +94,7 @@ export default function HeadToHead() {
         <>
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
-          ) : !h2h || totalGames === 0 ? (
+          ) : !h2h || totalSessions === 0 ? (
             <Card className="bg-card border-border">
               <CardContent className="py-16 text-center">
                 <Swords className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-30" />
@@ -124,7 +121,7 @@ export default function HeadToHead() {
 
                     {/* Center */}
                     <div className="text-center space-y-3">
-                      <p className="text-muted-foreground text-sm">{totalGames} {totalGames === 1 ? "game" : "games"} played</p>
+                      <p className="text-muted-foreground text-sm">{totalSessions} {totalSessions === 1 ? "game" : "games"} played</p>
                       <div className="space-y-2">
                         <div className="h-3 bg-muted rounded-full overflow-hidden flex">
                           <div

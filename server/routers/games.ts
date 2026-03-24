@@ -185,7 +185,7 @@ export const gamesRouter = router({
           };
         });
 
-        // Update head-to-head cumulative game scores (for 2-player sessions)
+        // Update head-to-head cumulative game scores + session wins (for 2-player sessions)
         if (updatedPlayers.length === 2) {
           const [pA, pB] = updatedPlayers;
           const scoringA = playerScoring.find((s) => s.playerId === pA.playerId);
@@ -193,13 +193,25 @@ export const gamesRouter = router({
           const existing = await getHeadToHead(pA.playerId, pB.playerId);
           const minId = Math.min(pA.playerId, pB.playerId);
           const isAMin = pA.playerId === minId;
+
+          // Cumulative bonus-inclusive scores
           const existingCumA = isAMin ? (existing?.cumulativeGameScoreA ?? 0) : (existing?.cumulativeGameScoreB ?? 0);
           const existingCumB = isAMin ? (existing?.cumulativeGameScoreB ?? 0) : (existing?.cumulativeGameScoreA ?? 0);
           const newCumA = existingCumA + (scoringA?.totalGameScore ?? 0);
           const newCumB = existingCumB + (scoringB?.totalGameScore ?? 0);
+
+          // Session-level win tracking
+          const pAWonSession = winner.playerId === pA.playerId ? 1 : 0;
+          const pBWonSession = winner.playerId === pB.playerId ? 1 : 0;
+          const newSessWonA = (existing?.sessionsWonA ?? 0) + (isAMin ? pAWonSession : pBWonSession);
+          const newSessWonB = (existing?.sessionsWonB ?? 0) + (isAMin ? pBWonSession : pAWonSession);
+
           await upsertHeadToHead(pA.playerId, pB.playerId, {
             cumulativeGameScoreA: isAMin ? newCumA : newCumB,
             cumulativeGameScoreB: isAMin ? newCumB : newCumA,
+            sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
+            sessionsWonA: newSessWonA,
+            sessionsWonB: newSessWonB,
           });
         }
 

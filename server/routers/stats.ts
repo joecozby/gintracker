@@ -98,9 +98,14 @@ export const statsRouter = router({
       return {
         playerA,
         playerB,
-        gamesPlayed: h2h?.gamesPlayed ?? 0,
-        winsA: isAFirst ? (h2h?.winsA ?? 0) : (h2h?.winsB ?? 0),
-        winsB: isAFirst ? (h2h?.winsB ?? 0) : (h2h?.winsA ?? 0),
+        handsPlayed: h2h?.gamesPlayed ?? 0,
+        sessionsPlayed: h2h?.sessionsPlayed ?? 0,
+        // session-level wins (what the UI should show as "wins")
+        winsA: isAFirst ? (h2h?.sessionsWonA ?? 0) : (h2h?.sessionsWonB ?? 0),
+        winsB: isAFirst ? (h2h?.sessionsWonB ?? 0) : (h2h?.sessionsWonA ?? 0),
+        // hand-level wins (kept for detailed stats if needed)
+        handWinsA: isAFirst ? (h2h?.winsA ?? 0) : (h2h?.winsB ?? 0),
+        handWinsB: isAFirst ? (h2h?.winsB ?? 0) : (h2h?.winsA ?? 0),
         totalPointsA: isAFirst ? (h2h?.totalPointsA ?? 0) : (h2h?.totalPointsB ?? 0),
         totalPointsB: isAFirst ? (h2h?.totalPointsB ?? 0) : (h2h?.totalPointsA ?? 0),
         cumulativeGameScoreA: isAFirst ? (h2h?.cumulativeGameScoreA ?? 0) : (h2h?.cumulativeGameScoreB ?? 0),

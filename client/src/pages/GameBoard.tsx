@@ -356,7 +356,7 @@ function GameOverDialog({
                 })}
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                After {h2hData.gamesPlayed} {h2hData.gamesPlayed === 1 ? "game" : "games"} · includes all bonuses
+                After {h2hData.sessionsPlayed} {h2hData.sessionsPlayed === 1 ? "game" : "games"} · includes all bonuses
               </p>
             </div>
           )}
