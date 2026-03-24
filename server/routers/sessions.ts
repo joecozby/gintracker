@@ -13,6 +13,7 @@ import {
   updateSession,
   writeAuditLog,
 } from "../db";
+import { fullRecompute } from "../lib/gameProcessor";
 import { publicProcedure, router } from "../_core/trpc";
 
 export const sessionsRouter = router({
@@ -137,6 +138,9 @@ export const sessionsRouter = router({
         targetId: input.id,
         beforeJson: { name: sessionName },
       });
+      // Recompute all derived stats so player_stats and head_to_head
+      // reflect the deletion accurately
+      await fullRecompute(0);
       return { success: true };
     }),
 });

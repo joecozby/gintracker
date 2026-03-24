@@ -15,8 +15,10 @@ import {
   createEloHistory,
   deleteEloHistoryByGame,
   getAdminSetting,
+  getAllCompletedSessionsWithPlayers,
   getAllGamesForRecompute,
   getGameResults,
+  getHeadToHead,
   getPlayerStats,
   resetAllEloHistory,
   resetAllHeadToHead,
@@ -283,6 +285,62 @@ export async function fullRecompute(actorUserId: number): Promise<void> {
             (existing?.totalPointsB ?? 0) + (isAFirst ? b.pointsScored : a.pointsScored),
         });
       }
+    }
+  }
+
+  // ── Session-level stats recompute ──────────────────────────────────────────
+  // Replay sessionsPlayed/sessionsWon for player_stats and
+  // sessionsPlayed/sessionsWonA/B + cumulativeGameScore for head_to_head
+  const completedSessions = await getAllCompletedSessionsWithPlayers();
+
+  for (const { session, players: sPlayers } of completedSessions) {
+    if (sPlayers.length === 0) continue;
+    const sorted = [...sPlayers].sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0));
+    const winner = sorted[0];
+
+    // Update sessionsPlayed / sessionsWon for each player
+    for (const sp of sPlayers) {
+      const existing = await getPlayerStats(sp.playerId);
+      await upsertPlayerStats(sp.playerId, {
+        sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
+        sessionsWon: (existing?.sessionsWon ?? 0) + (sp.playerId === winner.playerId ? 1 : 0),
+      });
+    }
+
+    // Update head_to_head session stats for 2-player sessions
+    if (sPlayers.length === 2) {
+      const [pA, pB] = sPlayers;
+      const minId = Math.min(pA.playerId, pB.playerId);
+      const isAMin = pA.playerId === minId;
+      const existing = await getHeadToHead(pA.playerId, pB.playerId);
+
+      // Compute bonus-inclusive scores
+      const loser = sorted[1];
+      const loserHandsWon = loser?.handsWon ?? 0;
+      const isShutout = loserHandsWon === 0;
+      const scoreDiff = Math.max(0, (winner.totalScore ?? 0) - (loser?.totalScore ?? 0));
+
+      const calcScore = (sp: typeof pA) => {
+        const isWin = sp.playerId === winner.playerId;
+        return (sp.totalScore ?? 0) +
+          sp.handsWon * 20 +
+          (isWin ? 100 : 0) +
+          (isWin && isShutout ? 100 : 0) +
+          (isWin ? scoreDiff : 0);
+      };
+
+      const scoreA = calcScore(pA);
+      const scoreB = calcScore(pB);
+      const pAWon = pA.playerId === winner.playerId ? 1 : 0;
+      const pBWon = pB.playerId === winner.playerId ? 1 : 0;
+
+      await upsertHeadToHead(pA.playerId, pB.playerId, {
+        sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
+        sessionsWonA: (existing?.sessionsWonA ?? 0) + (isAMin ? pAWon : pBWon),
+        sessionsWonB: (existing?.sessionsWonB ?? 0) + (isAMin ? pBWon : pAWon),
+        cumulativeGameScoreA: (existing?.cumulativeGameScoreA ?? 0) + (isAMin ? scoreA : scoreB),
+        cumulativeGameScoreB: (existing?.cumulativeGameScoreB ?? 0) + (isAMin ? scoreB : scoreA),
+      });
     }
   }
 

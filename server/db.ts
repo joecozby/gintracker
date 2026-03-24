@@ -433,6 +433,8 @@ export async function resetAllPlayerStats() {
     gamesPlayed: 0,
     gamesWon: 0,
     gamesLost: 0,
+    sessionsPlayed: 0,
+    sessionsWon: 0,
     totalPoints: 0,
     totalDeadwood: 0,
     ginCount: 0,
@@ -454,4 +456,23 @@ export async function resetAllEloHistory() {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.delete(eloHistory);
+}
+
+export async function getAllCompletedSessionsWithPlayers() {
+  const db = await getDb();
+  if (!db) return [];
+  const completedSessions = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.status, "completed"))
+    .orderBy(asc(sessions.completedAt));
+  return Promise.all(
+    completedSessions.map(async (s) => ({
+      session: s,
+      players: await db
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, s.id)),
+    }))
+  );
 }
