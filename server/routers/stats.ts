@@ -112,25 +112,26 @@ export const statsRouter = router({
     .input(z.object({ playerId: z.number() }))
     .query(async ({ input }) => {
       const rows = await getHeadToHeadForPlayer(input.playerId);
-      const enriched = await Promise.all(
-        rows.map(async (row) => {
-          const opponentId =
-            row.playerAId === input.playerId ? row.playerBId : row.playerAId;
-          const opponent = await getPlayerById(opponentId);
-          const isAFirst = row.playerAId === input.playerId;
-          return {
-            opponent,
-            gamesPlayed: row.gamesPlayed,
-            wins: isAFirst ? row.winsA : row.winsB,
-            losses: isAFirst ? row.winsB : row.winsA,
-            totalPoints: isAFirst ? row.totalPointsA : row.totalPointsB,
-            opponentPoints: isAFirst ? row.totalPointsB : row.totalPointsA,
-            cumulativeGameScore: isAFirst ? (row.cumulativeGameScoreA ?? 0) : (row.cumulativeGameScoreB ?? 0),
-            opponentCumulativeGameScore: isAFirst ? (row.cumulativeGameScoreB ?? 0) : (row.cumulativeGameScoreA ?? 0),
-          };
-        })
+
+      // Fetch all opponent records in parallel instead of sequentially
+      const opponentIds = rows.map((row) =>
+        row.playerAId === input.playerId ? row.playerBId : row.playerAId
       );
-      return enriched;
+      const opponents = await Promise.all(opponentIds.map((id) => getPlayerById(id)));
+
+      return rows.map((row, i) => {
+        const isAFirst = row.playerAId === input.playerId;
+        return {
+          opponent: opponents[i],
+          gamesPlayed: row.gamesPlayed,
+          wins: isAFirst ? row.winsA : row.winsB,
+          losses: isAFirst ? row.winsB : row.winsA,
+          totalPoints: isAFirst ? row.totalPointsA : row.totalPointsB,
+          opponentPoints: isAFirst ? row.totalPointsB : row.totalPointsA,
+          cumulativeGameScore: isAFirst ? (row.cumulativeGameScoreA ?? 0) : (row.cumulativeGameScoreB ?? 0),
+          opponentCumulativeGameScore: isAFirst ? (row.cumulativeGameScoreB ?? 0) : (row.cumulativeGameScoreA ?? 0),
+        };
+      });
     }),
 });
 

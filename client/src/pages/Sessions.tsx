@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +22,6 @@ import { useLocation } from "wouter";
 
 export default function Sessions() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
   const utils = trpc.useUtils();
   const { data: sessions, isLoading } = trpc.sessions.list.useQuery({ status: undefined });
   const { data: players } = trpc.players.list.useQuery();
@@ -32,7 +30,8 @@ export default function Sessions() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  const isAdmin = user?.role === "admin";
+  // No auth layer — all actions are available to everyone
+  const isAdmin = true;
 
   const createMutation = trpc.sessions.create.useMutation({
     onSuccess: (data) => {

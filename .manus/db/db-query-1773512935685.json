@@ -1,9 +1,0 @@
-{
-  "query": "-- Players 1 and 2 (minId=1, maxId=2 so playerAId=1, playerBId=2)\n-- Session 30001: P1=460 (shutout win: 100+60+100+100+100), P2=0\n-- Session 30002: P1=345 (win: 111+100+100+0+34), P2=117 (loss: 77+40+0+0+0)\n-- Cumulative: P1=805, P2=117\nUPDATE head_to_head\nSET cumulativeGameScoreA = 805, cumulativeGameScoreB = 117\nWHERE playerAId = 1 AND playerBId = 2;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute -- Players 1 and 2 (minId=1, maxId=2 so playerAId=1, playerBId=2)\n-- Session 30001: P1=460 (shutout win: 100+60+100+100+100), P2=0\n-- Session 30002: P1=345 (win: 111+100+100+0+34), P2=117 (loss: 77+40+0+0+0)\n-- Cumulative: P1=805, P2=117\nUPDATE head_to_head\nSET cumulativeGameScoreA = 805, cumulativeGameScoreB = 117\nWHERE playerAId = 1 AND playerBId = 2;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 71
-}

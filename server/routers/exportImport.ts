@@ -163,7 +163,7 @@ export const aiRouter = router({
       const { getPlayerById, getPlayerStats, getEloHistoryByPlayer } = await import("../db");
       const [player, stats, eloHistory] = await Promise.all([
         getPlayerById(input.playerId),
-        getPlayerById(input.playerId).then(() => getPlayerStats(input.playerId)),
+        getPlayerStats(input.playerId),
         getEloHistoryByPlayer(input.playerId, 20),
       ]);
 
@@ -190,17 +190,21 @@ Stats:
 
 Provide a concise, actionable analysis in markdown format.`;
 
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: "You are an expert Gin Rummy coach and data analyst." },
-          { role: "user", content: prompt },
-        ],
-      });
-
-      return {
-        analysis: response.choices[0]?.message?.content ?? "Unable to generate analysis.",
-        playerName: player.name,
-      };
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are an expert Gin Rummy coach and data analyst." },
+            { role: "user", content: prompt },
+          ],
+        });
+        return {
+          analysis: response.choices[0]?.message?.content ?? "Unable to generate analysis.",
+          playerName: player.name,
+        };
+      } catch (err) {
+        console.error("[AI analyzePlayer]", err);
+        return { analysis: "AI analysis is temporarily unavailable.", playerName: player.name };
+      }
     }),
 
   analyzeSession: publicProcedure
@@ -242,17 +246,21 @@ Provide:
 
 Keep it concise and engaging.`;
 
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: "You are an expert Gin Rummy analyst." },
-          { role: "user", content: prompt },
-        ],
-      });
-
-      return {
-        analysis: response.choices[0]?.message?.content ?? "Unable to generate analysis.",
-        sessionName: session.name,
-      };
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are an expert Gin Rummy analyst." },
+            { role: "user", content: prompt },
+          ],
+        });
+        return {
+          analysis: response.choices[0]?.message?.content ?? "Unable to generate analysis.",
+          sessionName: session.name,
+        };
+      } catch (err) {
+        console.error("[AI analyzeSession]", err);
+        return { analysis: "AI analysis is temporarily unavailable.", sessionName: session.name };
+      }
     }),
 
   getInsights: publicProcedure.mutation(async () => {
@@ -284,15 +292,19 @@ Provide:
 
 Keep it engaging and insightful.`;
 
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: "You are an expert Gin Rummy analyst and commentator." },
-        { role: "user", content: prompt },
-      ],
-    });
-
-    return {
-      analysis: response.choices[0]?.message?.content ?? "Unable to generate insights.",
-    };
+    try {
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are an expert Gin Rummy analyst and commentator." },
+          { role: "user", content: prompt },
+        ],
+      });
+      return {
+        analysis: response.choices[0]?.message?.content ?? "Unable to generate insights.",
+      };
+    } catch (err) {
+      console.error("[AI getInsights]", err);
+      return { analysis: "AI analysis is temporarily unavailable." };
+    }
   }),
 });

@@ -1,10 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +29,6 @@ import {
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 
 const navGroups = [
   {
@@ -79,13 +72,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
-
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
-
-  if (loading) return <DashboardLayoutSkeleton />;
 
   return (
     <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
@@ -103,7 +92,6 @@ function DashboardLayoutContent({
   children: React.ReactNode;
   setSidebarWidth: (w: number) => void;
 }) {
-  const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -202,29 +190,20 @@ function DashboardLayoutContent({
 
           {/* Footer */}
           <SidebarFooter className="p-3 border-t border-sidebar-border">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-sidebar-accent transition-colors w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-8 w-8 border border-border shrink-0">
-                    <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
-                      ♠
-                    </AvatarFallback>
-                  </Avatar>
-                  {!isCollapsed && (
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate leading-none text-foreground">
-                        Gin Tracker
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        {user?.name || "Guest"}
-                      </p>
-                    </div>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+              <Avatar className="h-8 w-8 border border-border shrink-0">
+                <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
+                  ♠
+                </AvatarFallback>
+              </Avatar>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate leading-none text-foreground">
+                    Gin Tracker
+                  </p>
+                </div>
+              )}
+            </div>
           </SidebarFooter>
         </Sidebar>
 

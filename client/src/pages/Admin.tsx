@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +9,8 @@ import { Download, RefreshCw, Settings, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-
   const { data: auditLog, isLoading: auditLoading } = trpc.admin.auditLog.useQuery(
-    { limit: 50, offset: 0 },
-    { enabled: isAdmin }
+    { limit: 50, offset: 0 }
   );
 
   const recomputeMutation = trpc.admin.recomputeAll.useMutation({
@@ -40,16 +35,6 @@ export default function AdminPage() {
       toast.error("Export failed");
     }
   };
-
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <Shield className="h-16 w-16 text-muted-foreground opacity-30" />
-        <h2 className="text-xl font-serif font-semibold text-foreground">Admin Access Required</h2>
-        <p className="text-muted-foreground text-sm">You need administrator privileges to view this page.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -155,12 +140,8 @@ export default function AdminPage() {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Your role</span>
-                    <span className="text-foreground font-medium">{user?.role}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">User ID</span>
-                    <span className="text-foreground font-medium">{user?.id}</span>
+                    <span className="text-muted-foreground">Access level</span>
+                    <span className="text-foreground font-medium">Public (no auth)</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Elo start rating</span>

@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE session_players sp\nJOIN (\n  SELECT \n    g.sessionId,\n    gr.playerId,\n    SUM(gr.pointsScored) AS totalScore,\n    COUNT(*) AS handsPlayed,\n    SUM(CASE WHEN gr.rank = 1 THEN 1 ELSE 0 END) AS handsWon\n  FROM game_results gr\n  JOIN games g ON g.id = gr.gameId\n  WHERE g.isReverted = 0\n  GROUP BY g.sessionId, gr.playerId\n) computed ON sp.sessionId = computed.sessionId AND sp.playerId = computed.playerId\nSET \n  sp.totalScore = computed.totalScore,\n  sp.handsPlayed = computed.handsPlayed,\n  sp.handsWon = computed.handsWon;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 25EMAuqsXNnxbn4.root --database UFmRayAUKBpWQhew29rCsn --execute UPDATE session_players sp\nJOIN (\n  SELECT \n    g.sessionId,\n    gr.playerId,\n    SUM(gr.pointsScored) AS totalScore,\n    COUNT(*) AS handsPlayed,\n    SUM(CASE WHEN gr.rank = 1 THEN 1 ELSE 0 END) AS handsWon\n  FROM game_results gr\n  JOIN games g ON g.id = gr.gameId\n  WHERE g.isReverted = 0\n  GROUP BY g.sessionId, gr.playerId\n) computed ON sp.sessionId = computed.sessionId AND sp.playerId = computed.playerId\nSET \n  sp.totalScore = computed.totalScore,\n  sp.handsPlayed = computed.handsPlayed,\n  sp.handsWon = computed.handsWon;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 98
-}

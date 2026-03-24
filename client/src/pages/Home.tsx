@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Activity, Gamepad2, Plus, Trophy, TrendingUp, Users } from "lucide-reac
 import { useLocation } from "wouter";
 
 export default function Home() {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { data: leaderboard, isLoading: lbLoading } = trpc.stats.leaderboard.useQuery({ minGames: 0 });
   const { data: sessions, isLoading: sessLoading } = trpc.sessions.list.useQuery({ status: undefined });
@@ -25,7 +23,7 @@ export default function Home() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-serif font-semibold text-foreground">
-            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+            Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
             {activeSessions.length > 0
