@@ -155,9 +155,20 @@ export default function Sessions() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right text-xs text-muted-foreground">
-                      <p>Gin: +{session.ginBonus}</p>
-                      <p>Undercut: +{session.undercutBonus}</p>
+                    <div className="text-right text-xs text-muted-foreground space-y-0.5">
+                      {session.status === "completed" && session.players.length >= 2 && (() => {
+                        const winner = session.players.find(p => p.playerId === session.winnerId);
+                        const loser = session.players.find(p => p.playerId !== session.winnerId);
+                        return (
+                          <>
+                            <p className="text-primary font-medium">{winner?.playerName} wins</p>
+                            <p>{winner?.totalScore ?? 0} – {loser?.totalScore ?? 0}</p>
+                          </>
+                        );
+                      })()}
+                      {session.status === "active" && session.players.length >= 2 && (
+                        <p>{session.players.map(p => p.playerName).join(" vs ")}</p>
+                      )}
                     </div>
                     {isAdmin && (
                       <Button

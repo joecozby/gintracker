@@ -57,7 +57,7 @@ export default function PlayerProfile() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Trophy className="h-4 w-4 text-primary" />} label="Games Played" value={stats?.gamesPlayed ?? 0} />
+        <StatCard icon={<Trophy className="h-4 w-4 text-primary" />} label="Games Played" value={data.sessionsPlayed ?? 0} />
         <StatCard icon={<Target className="h-4 w-4 text-primary" />} label="Win Rate" value={`${winRate}%`} />
         <StatCard icon={<Flame className="h-4 w-4 text-primary" />} label="Best Streak" value={stats?.bestStreak ?? 0} />
         <StatCard icon={<Zap className="h-4 w-4 text-primary" />} label="Gin Count" value={stats?.ginCount ?? 0} />
@@ -107,8 +107,8 @@ export default function PlayerProfile() {
             <CardTitle className="text-base font-medium">Performance Breakdown</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <StatRow label="Games Won" value={stats?.gamesWon ?? 0} total={stats?.gamesPlayed ?? 0} />
-            <StatRow label="Games Lost" value={stats?.gamesLost ?? 0} total={stats?.gamesPlayed ?? 0} color="destructive" />
+            <StatRow label="Games Won" value={data.sessionsWon ?? 0} total={data.sessionsPlayed ?? 0} />
+            <StatRow label="Games Lost" value={(data.sessionsPlayed ?? 0) - (data.sessionsWon ?? 0)} total={data.sessionsPlayed ?? 0} color="destructive" />
             <StatRow label="Gin Hands" value={stats?.ginCount ?? 0} total={stats?.gamesPlayed ?? 0} />
             <StatRow label="Knock Hands" value={stats?.knockCount ?? 0} total={stats?.gamesPlayed ?? 0} />
             <StatRow label="Undercuts" value={stats?.undercutCount ?? 0} total={stats?.gamesPlayed ?? 0} />

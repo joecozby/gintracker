@@ -193,6 +193,22 @@ export async function getSessionPlayers(sessionId: number) {
     .orderBy(desc(sessionPlayers.totalScore));
 }
 
+export async function getSessionPlayersWithNames(sessionId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      playerId: sessionPlayers.playerId,
+      playerName: players.name,
+      totalScore: sessionPlayers.totalScore,
+      handsWon: sessionPlayers.handsWon,
+    })
+    .from(sessionPlayers)
+    .innerJoin(players, eq(sessionPlayers.playerId, players.id))
+    .where(eq(sessionPlayers.sessionId, sessionId))
+    .orderBy(desc(sessionPlayers.totalScore));
+}
+
 export async function addSessionPlayer(sessionId: number, playerId: number) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");

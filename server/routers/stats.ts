@@ -128,9 +128,9 @@ export const statsRouter = router({
         const isAFirst = row.playerAId === input.playerId;
         return {
           opponent: opponents[i],
-          gamesPlayed: row.gamesPlayed,
-          wins: isAFirst ? row.winsA : row.winsB,
-          losses: isAFirst ? row.winsB : row.winsA,
+          gamesPlayed: row.sessionsPlayed ?? 0,
+          wins: isAFirst ? (row.sessionsWonA ?? 0) : (row.sessionsWonB ?? 0),
+          losses: isAFirst ? (row.sessionsWonB ?? 0) : (row.sessionsWonA ?? 0),
           totalPoints: isAFirst ? row.totalPointsA : row.totalPointsB,
           opponentPoints: isAFirst ? row.totalPointsB : row.totalPointsA,
           cumulativeGameScore: isAFirst ? (row.cumulativeGameScoreA ?? 0) : (row.cumulativeGameScoreB ?? 0),

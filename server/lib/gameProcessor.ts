@@ -66,9 +66,6 @@ export async function processGameLogged(input: ProcessGameInput): Promise<void> 
   for (const result of results) {
     const existing = await getPlayerStats(result.playerId);
     const isWin = result.rank === 1;
-    const prevStreak = existing?.currentStreak ?? 0;
-    const newStreak = isWin ? prevStreak + 1 : 0;
-    const bestStreak = Math.max(existing?.bestStreak ?? 0, newStreak);
 
     await upsertPlayerStats(result.playerId, {
       gamesPlayed: (existing?.gamesPlayed ?? 0) + 1,
@@ -79,8 +76,6 @@ export async function processGameLogged(input: ProcessGameInput): Promise<void> 
       ginCount: (existing?.ginCount ?? 0) + (result.isGin ? 1 : 0),
       knockCount: (existing?.knockCount ?? 0) + (result.isKnock ? 1 : 0),
       undercutCount: (existing?.undercutCount ?? 0) + (result.isUndercut ? 1 : 0),
-      currentStreak: newStreak,
-      bestStreak,
       lastGameAt: new Date(),
     });
   }
@@ -195,8 +190,8 @@ export async function fullRecompute(actorUserId: number): Promise<void> {
   // Track running state
   const eloMap = new Map<number, number>();
   const gamesPlayedMap = new Map<number, number>();
-  const streakMap = new Map<number, number>();
-  const bestStreakMap = new Map<number, number>();
+  const streakMap = new Map<number, number>(); // session-level streak
+  const bestStreakMap = new Map<number, number>(); // session-level best streak
 
   for (const game of allGames) {
     const results = await getGameResults(game.id);
@@ -235,14 +230,6 @@ export async function fullRecompute(actorUserId: number): Promise<void> {
       const gp = (gamesPlayedMap.get(result.playerId) ?? 0) + 1;
       gamesPlayedMap.set(result.playerId, gp);
 
-      const prevStreak = streakMap.get(result.playerId) ?? 0;
-      const newStreak = isWin ? prevStreak + 1 : 0;
-      streakMap.set(result.playerId, newStreak);
-      bestStreakMap.set(
-        result.playerId,
-        Math.max(bestStreakMap.get(result.playerId) ?? 0, newStreak)
-      );
-
       const existing = await getPlayerStats(result.playerId);
       await upsertPlayerStats(result.playerId, {
         eloRating: eloMap.get(result.playerId) ?? 1500,
@@ -254,8 +241,6 @@ export async function fullRecompute(actorUserId: number): Promise<void> {
         ginCount: (existing?.ginCount ?? 0) + (result.isGin ? 1 : 0),
         knockCount: (existing?.knockCount ?? 0) + (result.isKnock ? 1 : 0),
         undercutCount: (existing?.undercutCount ?? 0) + (result.isUndercut ? 1 : 0),
-        currentStreak: newStreak,
-        bestStreak: bestStreakMap.get(result.playerId) ?? 0,
         lastGameAt: game.playedAt,
       });
     }
@@ -298,12 +283,20 @@ export async function fullRecompute(actorUserId: number): Promise<void> {
     const sorted = [...sPlayers].sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0));
     const winner = sorted[0];
 
-    // Update sessionsPlayed / sessionsWon for each player
+    // Update sessionsPlayed / sessionsWon / streak for each player
     for (const sp of sPlayers) {
       const existing = await getPlayerStats(sp.playerId);
+      const isWinner = sp.playerId === winner.playerId;
+      const prevStreak = streakMap.get(sp.playerId) ?? 0;
+      const newStreak = isWinner ? prevStreak + 1 : 0;
+      streakMap.set(sp.playerId, newStreak);
+      const newBest = Math.max(bestStreakMap.get(sp.playerId) ?? 0, newStreak);
+      bestStreakMap.set(sp.playerId, newBest);
       await upsertPlayerStats(sp.playerId, {
         sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
-        sessionsWon: (existing?.sessionsWon ?? 0) + (sp.playerId === winner.playerId ? 1 : 0),
+        sessionsWon: (existing?.sessionsWon ?? 0) + (isWinner ? 1 : 0),
+        currentStreak: newStreak,
+        bestStreak: newBest,
       });
     }
 

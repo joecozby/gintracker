@@ -178,10 +178,6 @@ export default function HeadToHead() {
                       <p className="text-3xl font-bold text-primary">{cumA}</p>
                       <p className="text-xs text-muted-foreground">{h2h.playerA?.name}</p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">running total</p>
-                      <p className="text-sm font-medium text-foreground">{cumA + cumB} combined</p>
-                    </div>
                     <div className="text-right">
                       <p className="text-3xl font-bold text-chart-2">{cumB}</p>
                       <p className="text-xs text-muted-foreground">{h2h.playerB?.name}</p>

@@ -144,13 +144,18 @@ export const gamesRouter = router({
       if (sessionComplete) {
         await updateSession(input.sessionId, { status: "completed", completedAt: new Date() });
 
-        // Update sessionsPlayed and sessionsWon for all participants
+        // Update sessionsPlayed, sessionsWon, and session streak for all participants
         for (const sp of updatedPlayers) {
           const existing = await getPlayerStats(sp.playerId);
           const isWinner = sp.playerId === winner.playerId;
+          const prevStreak = existing?.currentStreak ?? 0;
+          const newStreak = isWinner ? prevStreak + 1 : 0;
+          const newBest = Math.max(existing?.bestStreak ?? 0, newStreak);
           await upsertPlayerStats(sp.playerId, {
             sessionsPlayed: (existing?.sessionsPlayed ?? 0) + 1,
             sessionsWon: (existing?.sessionsWon ?? 0) + (isWinner ? 1 : 0),
+            currentStreak: newStreak,
+            bestStreak: newBest,
           });
         }
 

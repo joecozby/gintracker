@@ -9,6 +9,7 @@ import {
   getPlayerById,
   getSessionById,
   getSessionPlayers,
+  getSessionPlayersWithNames,
   getSessions,
   updateSession,
   writeAuditLog,
@@ -24,7 +25,14 @@ export const sessionsRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return getSessions(input.status);
+      const sessionList = await getSessions(input.status);
+      return Promise.all(
+        sessionList.map(async (s) => {
+          const players = await getSessionPlayersWithNames(s.id);
+          const winner = s.status === "completed" ? players[0] ?? null : null;
+          return { ...s, players, winnerId: winner?.playerId ?? null };
+        })
+      );
     }),
 
   getById: publicProcedure
