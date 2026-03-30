@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ENV } from "./env";
 
-const MODEL = "claude-3-5-sonnet-20241022";
+const MODEL = "claude-sonnet-4-6";
 
 function getClient(): Anthropic {
   if (!ENV.anthropicApiKey) {
