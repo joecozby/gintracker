@@ -161,7 +161,7 @@ export default function Sessions() {
                         const loser = session.players.find(p => p.playerId !== session.winnerId);
                         return (
                           <>
-                            <p className="text-primary font-medium">{winner?.playerName} wins</p>
+                            <p className="text-primary font-medium">{winner?.playerName} def. {loser?.playerName}</p>
                             <p>{winner?.totalScore ?? 0} – {loser?.totalScore ?? 0}</p>
                           </>
                         );
