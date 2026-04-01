@@ -151,17 +151,17 @@ export default function PlayerProfile() {
                       <span className="text-muted-foreground">{h.losses}L</span>
                       <span className="text-xs text-muted-foreground">({h.gamesPlayed} games)</span>
                     </div>
-                    <div className={`flex items-center gap-1 border-l border-border pl-3 font-bold text-sm ${
-                      h.cumulativeGameScore > h.opponentCumulativeGameScore
-                        ? "text-emerald-400"
-                        : h.cumulativeGameScore < h.opponentCumulativeGameScore
-                        ? "text-red-400"
-                        : "text-muted-foreground"
-                    }`}>
-                      <span>{h.cumulativeGameScore}</span>
-                      <span className="font-normal text-muted-foreground">–</span>
-                      <span>{h.opponentCumulativeGameScore}</span>
-                      <span className="text-xs font-normal text-muted-foreground ml-0.5">pts</span>
+                    <div className="flex items-center gap-1 border-l border-border pl-3 text-sm">
+                      <span className={`font-bold ${
+                        h.cumulativeGameScore > h.opponentCumulativeGameScore
+                          ? "text-emerald-400"
+                          : h.cumulativeGameScore < h.opponentCumulativeGameScore
+                          ? "text-red-400"
+                          : "text-muted-foreground"
+                      }`}>{h.cumulativeGameScore}</span>
+                      <span className="text-muted-foreground">–</span>
+                      <span className="text-muted-foreground">{h.opponentCumulativeGameScore}</span>
+                      <span className="text-xs text-muted-foreground ml-0.5">pts</span>
                     </div>
                   </div>
                 </div>
