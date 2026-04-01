@@ -85,13 +85,13 @@ export default function GameBoard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setLocation("/sessions")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-serif font-semibold">{session.name}</h1>
               <Badge
                 variant={isActive ? "default" : "secondary"}
@@ -101,15 +101,15 @@ export default function GameBoard() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              Target: {session.targetScore} pts · Hand {games.length} · Gin +{session.ginBonus} · Undercut +{session.undercutBonus}
+              Target: {session.targetScore} pts · Hand {games.length}
             </p>
           </div>
         </div>
         {isActive && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 pl-11 sm:pl-0">
             <Dialog open={logOpen} onOpenChange={setLogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:opacity-90 gap-2">
+                <Button className="bg-primary text-primary-foreground hover:opacity-90 gap-2 flex-1 sm:flex-none">
                   <Plus className="h-4 w-4" />
                   Log Hand
                 </Button>
@@ -552,14 +552,14 @@ function PlayerHandInput({
           <button
             type="button"
             onClick={onSetKnocker}
-            className={`text-xs px-2 py-1 rounded border transition-all ${isKnocker && !isGinner ? "border-primary bg-primary/20 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+            className={`text-xs px-3 py-1.5 rounded border transition-all min-w-[52px] ${isKnocker && !isGinner ? "border-primary bg-primary/20 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
           >
             Knock
           </button>
           <button
             type="button"
             onClick={onSetGinner}
-            className={`text-xs px-2 py-1 rounded border transition-all ${isGinner ? "border-primary bg-primary/20 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+            className={`text-xs px-3 py-1.5 rounded border transition-all min-w-[52px] ${isGinner ? "border-primary bg-primary/20 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
           >
             Gin ♠
           </button>
