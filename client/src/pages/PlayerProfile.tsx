@@ -149,6 +149,9 @@ export default function PlayerProfile() {
                     <span className="text-muted-foreground">–</span>
                     <span className="text-muted-foreground">{h.losses}L</span>
                     <span className="text-xs text-muted-foreground">({h.gamesPlayed} games)</span>
+                    <span className="text-xs text-muted-foreground border-l border-border pl-2">
+                      {h.cumulativeGameScore} – {h.opponentCumulativeGameScore} pts
+                    </span>
                   </div>
                 </div>
               ))}
