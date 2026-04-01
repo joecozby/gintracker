@@ -126,64 +126,64 @@ export default function Sessions() {
               onClick={() => setLocation(`/sessions/${session.id}`)}
             >
               <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground truncate">{session.name}</h3>
-                      <Badge
-                        variant={session.status === "active" ? "default" : "secondary"}
-                        className={session.status === "active" ? "bg-primary/20 text-primary border-primary/30 text-xs" : "text-xs"}
-                      >
-                        {session.status}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Target className="h-3 w-3" />
-                        Target: {session.targetScore}
-                      </span>
-                      {session.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {session.location}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}
-                      </span>
-                    </div>
+                {/* Row 1: name + badge + delete button */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground truncate">{session.name}</h3>
+                    <Badge
+                      variant={session.status === "active" ? "default" : "secondary"}
+                      className={`shrink-0 ${session.status === "active" ? "bg-primary/20 text-primary border-primary/30 text-xs" : "text-xs"}`}
+                    >
+                      {session.status}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right text-xs text-muted-foreground space-y-0.5">
-                      {session.status === "completed" && session.players.length >= 2 && (() => {
-                        const winner = session.players.find(p => p.playerId === session.winnerId);
-                        const loser = session.players.find(p => p.playerId !== session.winnerId);
-                        return (
-                          <>
-                            <p className="text-primary font-medium">{winner?.playerName} def. {loser?.playerName}</p>
-                            <p>{winner?.totalScore ?? 0} – {loser?.totalScore ?? 0}</p>
-                          </>
-                        );
-                      })()}
-                      {session.status === "active" && session.players.length >= 2 && (
-                        <p>{session.players.map(p => p.playerName).join(" vs ")}</p>
-                      )}
-                    </div>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(session.id);
-                          setDeleteConfirmOpen(true);
-                        }}
-                        title="Delete session"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteId(session.id);
+                        setDeleteConfirmOpen(true);
+                      }}
+                      title="Delete session"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {/* Row 2: metadata + result */}
+                <div className="flex items-end justify-between gap-2">
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Target className="h-3 w-3" />
+                      Target: {session.targetScore}
+                    </span>
+                    {session.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {session.location}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground shrink-0 space-y-0.5">
+                    {session.status === "completed" && session.players.length >= 2 && (() => {
+                      const winner = session.players.find(p => p.playerId === session.winnerId);
+                      const loser = session.players.find(p => p.playerId !== session.winnerId);
+                      return (
+                        <>
+                          <p className="text-primary font-medium">{winner?.playerName} def. {loser?.playerName}</p>
+                          <p>{winner?.totalScore ?? 0} – {loser?.totalScore ?? 0}</p>
+                        </>
+                      );
+                    })()}
+                    {session.status === "active" && session.players.length >= 2 && (
+                      <p>{session.players.map(p => p.playerName).join(" vs ")}</p>
                     )}
                   </div>
                 </div>
