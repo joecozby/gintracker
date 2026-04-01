@@ -144,14 +144,25 @@ export default function PlayerProfile() {
               {h2hData.map((h) => (
                 <div key={h.opponent?.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/30 transition-colors">
                   <span className="font-medium text-sm text-foreground flex-1">{h.opponent?.name}</span>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-primary font-semibold">{h.wins}W</span>
-                    <span className="text-muted-foreground">–</span>
-                    <span className="text-muted-foreground">{h.losses}L</span>
-                    <span className="text-xs text-muted-foreground">({h.gamesPlayed} games)</span>
-                    <span className="text-xs text-muted-foreground border-l border-border pl-2">
-                      {h.cumulativeGameScore} – {h.opponentCumulativeGameScore} pts
-                    </span>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-semibold">{h.wins}W</span>
+                      <span className="text-muted-foreground">–</span>
+                      <span className="text-muted-foreground">{h.losses}L</span>
+                      <span className="text-xs text-muted-foreground">({h.gamesPlayed} games)</span>
+                    </div>
+                    <div className={`flex items-center gap-1 border-l border-border pl-3 font-bold text-sm ${
+                      h.cumulativeGameScore > h.opponentCumulativeGameScore
+                        ? "text-emerald-400"
+                        : h.cumulativeGameScore < h.opponentCumulativeGameScore
+                        ? "text-red-400"
+                        : "text-muted-foreground"
+                    }`}>
+                      <span>{h.cumulativeGameScore}</span>
+                      <span className="font-normal text-muted-foreground">–</span>
+                      <span>{h.opponentCumulativeGameScore}</span>
+                      <span className="text-xs font-normal text-muted-foreground ml-0.5">pts</span>
+                    </div>
                   </div>
                 </div>
               ))}
